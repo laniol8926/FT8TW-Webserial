@@ -120,7 +120,7 @@
 
   /* ── 解碼列（App call_list_holder_item）：一行固定不折行，訊息太長截斷；圓角 12、無邊框；
      字級 13／12／10／9px（＝設置的列表字型 16px 時；同 App 的字級偏移，跟著設置加減） ── */
-  .cards-wrap { --p-cols: 2.6em 0.75em 1.9em 2.15em 2.45em minmax(0, 1fr) minmax(3em, 1fr) minmax(3em, 1fr) 2.6em; --side-gap: 16px; }
+  .cards-wrap { --p-cols: 4.2em 0.75em 1.9em 2.15em 2.45em minmax(0, 1fr) minmax(3em, 1fr) minmax(3em, 1fr) 4.4em; --side-gap: 16px; }
   #decodes-panel .cards-wrap tr.card, #call-list-panel .cards-wrap tr.card {
     grid-template-columns: var(--p-cols); grid-template-areas: "utc seq snr dt hz msg from to dist";
     column-gap: 4px; row-gap: 0; padding: 1px 6px 2px; margin: 0 var(--side-gap) 2px 1px; border-radius: 12px; border: 0;
