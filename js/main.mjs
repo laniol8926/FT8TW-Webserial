@@ -201,6 +201,7 @@ const settingsUi = initSettingsUi({
       resetJs8(); // 換頻率：舊頻率上進行中的 JS8 訊息不能和新頻率的接在一起（D11）
       resetJttyLive(); // JTTY 同理
     }
+    if (s.band !== app.band) clearDecodes(); // 換波段：上一個波段的解碼跟新波段無關，清單、計數一起歸零（使用者需求）
     app.band = s.band;
     app.dialHz = s.dialHz;
     syncJs8Dial();
@@ -444,6 +445,13 @@ function updateDecodeCount() {
   const total = rows.filter((tr) => (rowData.get(tr)?.mode ?? app.mode) === app.mode).length;
   $('count').textContent = cards?.decodeCountText(shown, total) ?? t('page.decode.count', { n: shown });
   cards?.decodeEmpty(shown, total); // 沒有列看得到：清單中間顯示雷達
+}
+// 清空解碼清單（換波段、按「清除」都呼叫）：連同暫存一起清，否則重新整理後舊波段的列又冒出來
+function clearDecodes() {
+  $('decodes').replaceChildren();
+  $('count').textContent = '';
+  cards?.decodeEmpty(0, 0);
+  feedCache.clear(); // 重新整理也不再冒出來
 }
 // 換模式或篩選改變：清單只留目前模式（FT8、FT4、FT2、JS8 各自一份）且符合時間、類別篩選的列
 function filterDecodesByMode() {
@@ -1292,12 +1300,7 @@ $('qso-filter-clear').addEventListener('click', () => {
 });
 
 // 解碼清單的刪除鍵（同 FT8TW 解碼頁左上角）：清掉畫面上的清單，不影響 SWL Log 與回報
-$('decodes-clear').addEventListener('click', () => {
-  $('decodes').replaceChildren();
-  $('count').textContent = '';
-  cards?.decodeEmpty(0, 0);
-  feedCache.clear(); // 重新整理也不再冒出來
-});
+$('decodes-clear').addEventListener('click', clearDecodes);
 
 $('call-list-clear').addEventListener('click', () => cards?.clearCallList());
 
