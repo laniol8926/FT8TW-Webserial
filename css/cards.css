@@ -35,7 +35,7 @@
 .cards-wrap thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .cards-wrap tr.card {
   display: grid;
-  grid-template-columns: 4.2em 1em 4.2em 2.4em 2.8em minmax(10em, 2fr) 4.4em minmax(4em, 1fr) minmax(4em, 1fr);
+  grid-template-columns: 4.2em 1em 2.2em 2.2em 2.3em minmax(10em, 2fr) 4.4em minmax(3em, 1fr) minmax(3em, 1fr);
   grid-template-areas: "utc seq snr dt hz msg dist from to";
   column-gap: 8px; align-items: baseline;
   margin: 0 var(--side-gap) 4px 0; padding: 3px 10px; border-radius: 10px;
@@ -56,8 +56,8 @@
 .cards-wrap td.hz { grid-area: hz; text-align: right; }
 .cards-wrap td.msg { grid-area: msg; white-space: normal; overflow-wrap: break-word; font-size: 1.05em; width: auto; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
 .cards-wrap td.utc { grid-area: utc; font-size: 0.85em; }
-.cards-wrap td.from { grid-area: from; font-size: 0.85em; white-space: normal; }
-.cards-wrap td.to { grid-area: to; font-size: 0.85em; white-space: normal; }
+.cards-wrap td.from { grid-area: from; font-size: 0.85em; overflow: hidden; text-overflow: ellipsis; }
+.cards-wrap td.to { grid-area: to; font-size: 0.85em; overflow: hidden; text-overflow: ellipsis; }
 .cards-wrap td.dist { grid-area: dist; font-size: 0.85em; text-align: right; }
 .cards-wrap tr.card.strong td.msg { font-weight: bold; }
 .cards-wrap tr.card.worked td.msg { text-decoration: line-through; }
