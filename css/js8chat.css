@@ -1,0 +1,134 @@
+/* JS8 通訊畫面（add-web-js8-chat D1，仿 FT8TW Js8Fragment）。
+   只在 body.mode-js8 出現；桌機／平板在右欄（左欄頻譜＋地圖不變），手機是底部分頁的第一頁。 */
+:root {
+  --js8-in: #e3efff; --js8-in-text: #10233d;     /* 收到：藍底靠左（同 App js8_chat_bubble_in） */
+  --js8-out: #dff3e2; --js8-out-text: #113a1c;   /* 送出：綠底靠右 */
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --js8-in: #1c3350; --js8-in-text: #dce9fb;
+    --js8-out: #1d3f27; --js8-out-text: #d7f2dd;
+  }
+}
+:root[data-theme="dark"] {
+  --js8-in: #1c3350; --js8-in-text: #dce9fb;
+  --js8-out: #1d3f27; --js8-out-text: #d7f2dd;
+}
+
+body:not(.mode-js8) #js8-chat-panel { display: none !important; }
+/* JTTY 通訊畫面（add-web-jtty D10）：版面同 JS8；body.mode-chat＝JS8 或 JTTY（聊天模式共用的版面規則） */
+body:not(.mode-jtty) #jtty-chat-panel { display: none !important; }
+body:not(.mode-jtty) .jtty-only { display: none !important; } /* 控制分頁的 JTTY 區塊只在 JTTY 模式顯示 */
+body.mode-chat #qso-bar { display: none; } /* FT8 的通聯控制列（CQ、順序 1～6）在聊天模式沒有意義 */
+
+.js8chat { display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+.lists > .js8chat { overflow: hidden; } /* 只有對話區捲動 */
+.js8c-row { display: flex; align-items: center; gap: 8px; flex: none; min-width: 0; }
+.js8c-top { font-variant-numeric: tabular-nums; color: var(--muted); }
+.js8c-status { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+.js8c-countdown, .js8c-dial { white-space: nowrap; }
+.js8c-pickers select { min-width: 0; width: auto; padding: 6px; } /* 蓋過全域 select 的 width:100% */
+.js8c-pickers .js8c-station { flex: 1 1 0; }
+.js8c-pickers .js8c-speed { flex: none; }
+.js8c-pickers button { flex: none; }
+
+.js8c-list {
+  list-style: none; margin: 0; padding: 4px 2px; flex: 1; min-height: 120px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 6px; overscroll-behavior: contain;
+}
+.js8c-empty { flex: none; margin: 0; }
+.js8c-list:not(:empty) + .js8c-empty { display: none; }
+.js8c-day { align-self: center; font-size: 0.8rem; color: var(--muted); padding: 2px 10px; border: 1px solid var(--border); border-radius: 999px; }
+.js8c-msg { display: flex; flex-direction: column; max-width: min(85%, 560px); }
+.js8c-msg.rx { align-self: flex-start; }
+.js8c-msg.tx { align-self: flex-end; align-items: flex-end; }
+.js8c-meta { font-size: 0.75rem; color: var(--muted); font-variant-numeric: tabular-nums; white-space: pre; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.js8c-bubble {
+  padding: 6px 10px; border-radius: 12px; overflow-wrap: anywhere; white-space: pre-wrap; user-select: text;
+  font-size: var(--feed-font); line-height: 1.35; -webkit-touch-callout: none;
+}
+.js8c-msg.rx .js8c-bubble { background: var(--js8-in); color: var(--js8-in-text); border-top-left-radius: 4px; }
+.js8c-msg.tx .js8c-bubble { background: var(--js8-out); color: var(--js8-out-text); border-top-right-radius: 4px; }
+.js8c-msg.dim .js8c-bubble { opacity: 0.5; }
+.js8c-msg.live .js8c-bubble { opacity: 0.8; }
+
+.js8c-bar { font-size: 0.85rem; color: var(--muted); justify-content: space-between; font-variant-numeric: tabular-nums; }
+.js8c-input textarea {
+  flex: 1; min-width: 0; resize: none; font: inherit; padding: 8px; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--panel); color: var(--text); text-transform: none;
+}
+.js8c-input textarea:focus { min-height: 4.5em; } /* 取得焦點才展開成約 3 行（同 App §45） */
+.js8c-settings { flex-wrap: wrap; font-size: 0.9rem; }
+.js8c-settings .check { margin-bottom: 0; }
+.js8c-freq input { width: 5.5em; padding: 4px; }
+.js8c-hb { display: inline-flex; align-items: center; gap: 4px; }
+.js8c-hb select { width: auto; padding: 4px; }
+.js8c-settings .check, .js8c-freq { display: inline-flex; align-items: center; gap: 4px; }
+
+/* 長按／右鍵選單與快速選單：彈在指頭附近，不超出視窗 */
+.js8c-menu {
+  position: fixed; z-index: 60; min-width: 200px; max-width: min(92vw, 360px); max-height: 70vh; overflow-y: auto;
+  background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.25); padding: 4px 0;
+}
+.js8c-menu[hidden] { display: none; }
+.js8c-menu button {
+  display: block; width: 100%; text-align: left; background: transparent; color: var(--text); border: 0; border-radius: 0;
+  padding: 10px 14px; white-space: normal; overflow-wrap: anywhere;
+}
+.js8c-menu button + button.sep { border-top: 1px solid var(--border); }
+.js8c-menu button:hover, .js8c-menu button:focus-visible { background: var(--row-alt); }
+.js8c-menu button.destructive { color: #c62828; }
+.js8c-menu button:disabled { color: var(--muted); }
+.js8c-dialog { max-width: min(92vw, 420px); }
+.js8c-dialog .field { display: block; margin-bottom: 10px; }
+.js8c-dialog .field select, .js8c-dialog .field input { display: block; width: 100%; margin-top: 4px; }
+.js8c-dialog-actions { display: flex; justify-content: space-between; gap: 8px; margin-top: 12px; }
+/* iGate 設定框（D23）：passcode 本機相符、登入檢查結果；綠／紅用 class，深色模式另配亮一點的色 */
+.js8c-dialog { --igate-ok: #1b7f3b; --igate-bad: #c62828; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .js8c-dialog { --igate-ok: #3fb950; --igate-bad: #ff7b72; } }
+:root[data-theme="dark"] .js8c-dialog { --igate-ok: #3fb950; --igate-bad: #ff7b72; }
+.js8c-dialog .hint.ok { color: var(--igate-ok); }
+.js8c-dialog .hint.error { color: var(--igate-bad); }
+.js8c-igate-verify-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 8px 0 0; }
+.js8c-igate-verify-row .hint { margin: 0; }
+.danger-text { color: #c62828 !important; }
+
+/* 手機：JS8 通訊在底部分頁「呼叫」的位置、沉浸式（web-phone-app-layout），版面在 phone.css */
+
+/* ── JTTY：輸入列上方三欄（對方、排隊、序號）與 F1～F8（桌機一列 8 個、手機兩列各 4 個） ── */
+.jtty-fields { flex-wrap: wrap; gap: 6px 10px; font-size: 0.9rem; }
+.jtty-field { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
+.jtty-field input { width: 7.5em; padding: 4px 6px; text-transform: uppercase; }
+.jtty-serial input { width: 5.5em; text-align: center; }
+.jtty-serial button { padding: 2px 8px; min-width: 2em; }
+.jtty-fkeys { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; flex: none; }
+.jtty-fkey { display: flex; flex-direction: column; align-items: center; gap: 0; padding: 4px 2px; min-width: 0; line-height: 1.15; }
+.jtty-fkey b { font-size: 0.9rem; }
+.jtty-fkey-text { font-size: 0.7rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+.jttychat textarea.invalid { border-color: #c62828; outline-color: #c62828; }
+.jtty-bar .check { margin-bottom: 0; flex: none; }
+.jtty-bar .js8c-frames.error { color: #c62828; }
+.jtty-attach { margin: 8px 0 0; }
+.jtty-rest { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 10px 0 0; }
+.jtty-rest input { width: 4.5em; margin-top: 0 !important; text-align: center; }
+.jtty-fec { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 10px 0 0; }
+.jtty-fec select { margin-top: 0 !important; max-width: 100%; }
+.jtty-warn { flex: none; margin: 0; min-height: 0; }
+.jtty-warn:empty { display: none; }
+.jtty-macro { display: grid !important; grid-template-columns: 2.5em 1fr; align-items: center; gap: 6px; margin-bottom: 6px !important; }
+.jtty-macro input { margin-top: 0 !important; text-transform: uppercase; }
+@media (max-width: 599px) {
+  .jtty-fkeys { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+/* JTTY 收訊診斷（控制分頁，使用者 2026-10-10，web/js/jtty/diag-ui.mjs） */
+.jtty-diag { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 8px; }
+.jtty-diag h3 { margin: 0 0 4px; font-size: 1rem; }
+.jtty-diag h4 { margin: 8px 0 4px; font-size: 0.9rem; color: var(--muted); }
+.jtty-diag-causes { margin: 0; padding-left: 1.2em; }
+.jtty-diag-causes li { margin-bottom: 4px; overflow-wrap: anywhere; }
+.jtty-diag-stats { margin: 0; font-size: 0.85rem; overflow-wrap: anywhere; }
+.jtty-diag-msgs { margin: 0; padding: 0; list-style: none; font-size: 0.85rem; }
+.jtty-diag-msgs li { padding: 4px 0; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; min-width: 0; }
+.jtty-diag-msgs .diag-dots { font-family: ui-monospace, monospace; letter-spacing: 1px; word-break: break-all; }
+.jtty-diag-msgs .has-gap .diag-dots { color: #c62828; }

@@ -1,0 +1,258 @@
+/* ── 手機版面比照 S20 App（web-phone-app-layout，計畫 15-01）──
+   只在手機寬度（< 600px）生效；平板／桌機（≥ 600px）一律不受影響：手機才有的元件預設 display: none，其餘規則都在下面的 media query 裡。
+   版面：每頁紫色工具列（App fragment_calling_list／fragment_my_calling）、欄名列、兩行卡片、底部 5 分頁（紫色藥丸）、
+   右側浮動按鈕（App FloatView）、CQ 列只在呼叫頁、地圖全頁、JS8 沉浸式。分頁狀態由 phone-ui.mjs 寫在 body（data-ptab、p-*）。 */
+.pbar, .fab, .p-back, .colhead-n { display: none; }
+
+@media (max-width: 599px) {
+  /* 色票：values/colors.xml（淺色）、values-night/colors.xml（深色） */
+  :root {
+    --p-bar: #6200EE; --p-bar-text: #FFFFFF; --p-btn-a: #6826FA; --p-btn-b: #8F5FFA;
+    --p-nav: #F7F2FA; --p-nav-text: #49454F; --p-nav-sel: #6200EE; --p-pill: #E8DEF8; --p-pill-ink: #21005D;
+    --p-head-border: #5B9BD5; --p-fab: rgb(104 38 250 / 0.42); --p-cq: #6200EE; --p-page: var(--bg);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --p-bar: #220053; --p-bar-text: #B1B1B1; --p-btn-a: #4E1DBC; --p-btn-b: #442C78;
+      --p-nav: #2B2B2B; --p-nav-text: #CFCFCF; --p-nav-sel: #C9A7FF; --p-pill: #7E57C2; --p-pill-ink: #FFFFFF;
+      --p-head-border: #3E6E99; --p-fab: rgb(78 29 188 / 0.55); --p-cq: #7C4DFF; --p-page: #121212;
+    }
+  }
+  :root[data-theme="dark"] {
+    --p-bar: #220053; --p-bar-text: #B1B1B1; --p-btn-a: #4E1DBC; --p-btn-b: #442C78;
+    --p-nav: #2B2B2B; --p-nav-text: #CFCFCF; --p-nav-sel: #C9A7FF; --p-pill: #7E57C2; --p-pill-ink: #FFFFFF;
+    --p-head-border: #3E6E99; --p-fab: rgb(78 29 188 / 0.55); --p-cq: #7C4DFF; --p-page: #121212;
+  }
+
+  /* ── 骨架：頁面不捲動；工具列、CQ 列、底部分頁固定，只有清單本身捲動 ── */
+  body { background: var(--p-page); }
+  body > header.topbar { padding: 0; margin: 0; max-width: none; display: none; }
+  body[data-ptab="decode"] > header.topbar, body[data-ptab="call"]:not(.p-immersive) > header.topbar { display: block; }
+  .topbar > :not(.pbar) { display: none !important; } /* 全域標題、版本、模式下拉、狀態列、漢堡鈕：功能改由工具列、浮動按鈕、設置頁提供 */
+  main.layout { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+  main.layout > .side, main.layout > .lists, .lists > .control-group { display: contents; }
+  body[data-ptab="settings"] main.layout { display: none; }
+  .panel { margin: 0; }
+
+  /* 跑馬條 2px、紫色底（App utcProgressBar）；發射中多一條：洋紅進度＋黃色剩餘（txAccentBar） */
+  .slot-progress { height: 2px; background: var(--p-btn-a); }
+  body.tx-on .slot-progress { height: 4px; background: linear-gradient(var(--p-btn-a) 50%, #FFFF00 50%); }
+  body.tx-on .slot-progress .bar { background: linear-gradient(#c62828 50%, #FF00FF 50%); }
+  /* 青色跑馬條（add-dt-offset-advisor D20）：緊貼在跑馬條下方，同高 */
+  .rx-slot-progress { top: 2px; height: 2px; }
+  body.tx-on .rx-slot-progress { top: 4px; }
+  /* 取消偏差調整（D21）：紫色頂列放不下，收訊延遲 ≠ 0 時在頂列上方顯示一條細列 */
+  .p-rxdelay:not([hidden]) {
+    display: flex; flex: none; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 8px; padding: 6px 8px 2px;
+    background: var(--p-bar); color: #fff; font-size: 12px;
+  }
+  .p-rxdelay button { padding: 2px 8px; font-size: 12px; min-height: 28px; }
+  .p-rxdelay button.secondary { color: #fff; border: 1px solid #fff; }
+
+  /* ── 工具列（解碼頁、呼叫頁）：左清除鈕｜兩行 12px 白字（左半、右半以 56% 分界）＋第 3 行頻率下拉與電台組｜右開關鈕 ── */
+  body[data-ptab="decode"] .pbar-decode, body[data-ptab="call"] .pbar-call {
+    display: grid; grid-template-columns: 46px minmax(0, 56fr) minmax(0, 44fr) 46px; grid-template-rows: auto auto auto;
+    column-gap: 4px; align-items: center; padding: 3px 2px 2px; margin-top: 2px;
+    background: var(--p-bar); color: var(--p-bar-text); font-size: 12px; line-height: 1.3; white-space: nowrap;
+  }
+  .pbar > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .pbar .pbar-l1 { grid-area: 1 / 2; display: flex; align-items: center; gap: 6px; }
+  .pbar .pbar-l2 { grid-area: 2 / 2; display: flex; align-items: center; }
+  .pbar .pbar-r1 { grid-area: 1 / 3; }
+  .pbar .pbar-r2 { grid-area: 2 / 3; }
+  .pbar-btn {
+    grid-row: 1 / 4; width: 44px; height: 44px; padding: 0; display: inline-flex; align-items: center; justify-content: center;
+    border: 0; border-radius: 6px; color: #fff; background: linear-gradient(to top, var(--p-btn-a), var(--p-btn-b));
+  }
+  .pbar-btn:first-child { grid-column: 1; }
+  .pbar-btn:last-child { grid-column: 4; }
+  .pbar-btn svg { width: 30px; height: 30px; }
+  #pbar-tx[aria-pressed="false"] { color: #FF5252; } /* App ic_baseline_campaign 關閉時紅色斜線 */
+  #pbar-tx[aria-pressed="true"], #pbar-rx[aria-pressed="true"] { background: #c62828; color: #fff; }
+  #pbar-rx[aria-pressed="true"] { background: linear-gradient(to top, #2E7D32, #43A047); }
+  .pbar-badge {
+    display: inline-block; min-width: 14px; margin-right: 4px; padding: 0 2px; border-radius: 2px; text-align: center;
+    font-weight: bold; color: #fff; background: #5C6BC0; line-height: 15px;
+  }
+  .pbar-edit {
+    display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 18px; padding: 0; flex: none;
+    border: 0; border-radius: 5px; background: rgb(255 255 255 / 0.22); color: #fff;
+  }
+  .pbar-edit svg { width: 15px; height: 15px; }
+  .pbar-edit[aria-expanded="true"] { background: #fff; color: var(--p-bar); }
+  /* 電台資訊組（add-rig-meters M2）：型號縮成狀態點，頻率可截斷，S／SWR 優先 */
+  /* 第 3 行（add-web-frequency-list）：頻率下拉＋電台組（被調走的實際頻率、S 表、SWR），整組置中。
+     原本電台組疊在第 2 行中間；加上頻率下拉後 390 寬放不下（會蓋到解碼耗時與 UTC），所以獨立一行 */
+  .pbar .pbar-mid { grid-area: 3 / 2 / 4 / 4; justify-self: center; display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-width: 0; overflow: hidden; }
+  .pbar-freqsel {
+    flex: 0 1 auto; min-width: 0; max-width: 100%; width: auto; height: 18px; padding: 0 2px; border: 0; border-radius: 4px;
+    background: rgb(255 255 255 / 0.18); color: inherit; font: inherit; font-size: 11px; font-variant-numeric: tabular-nums;
+  }
+  .pbar-freqsel option, .pbar-freqsel optgroup { color: #000; background: #fff; }
+  .pbar .pbar-rig { flex: 0 1 auto; min-width: 0; max-width: 100%; gap: 4px; font-size: 11px; pointer-events: none; }
+  .pbar-rig .rm-model { display: none; }
+  .pbar-rig .rm-freq { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: inherit; }
+  .pbar-rig .rm-freq.rm-moved { color: #FFD180; }
+  .pbar-rig .rm-s, .pbar-rig .rm-swr { flex: none; padding: 0 3px; border: 0; background: rgb(255 255 255 / 0.2); color: #fff; }
+  .pbar-rig .rm-swr { color: #FF8A80; }
+  .pbar-rig .rm-swr.rm-high { background: #c62828; color: #fff; }
+  .pbar-r2 { text-align: right; } /* UTC 一律靠右，不靠 :has()（舊瀏覽器，review C4） */
+
+  /* ── 欄名列「S. dB Δt 頻率 訊息(n/總數) 距離」：固定在清單上方，欄位與卡片對齊 ── */
+  #decodes-panel .cards-wrap thead, #call-list-panel .cards-wrap thead {
+    position: sticky; top: 0; z-index: 3; display: block; width: auto; height: auto; overflow: visible; clip-path: none; white-space: nowrap;
+    background: var(--p-page); padding: 1px 1px 2px;
+  }
+  .cards-wrap thead tr {
+    display: grid; grid-template-columns: var(--p-cols); column-gap: 4px; align-items: center;
+    padding: 1px 6px; border: 1px solid var(--p-head-border); border-radius: 6px; font-size: 12px; line-height: 1.5;
+  }
+  .cards-wrap thead th { padding: 0; border: 0; color: var(--text); font-weight: normal; background: transparent; position: static; }
+  .cards-wrap thead th.seq { grid-column: 1; }
+  .cards-wrap thead th.snr { grid-column: 2; text-align: right; }
+  .cards-wrap thead th.dt { grid-column: 3; text-align: right; }
+  .cards-wrap thead th.hz { grid-column: 4; text-align: right; }
+  .cards-wrap thead th.msg { grid-column: 5 / 7; text-align: center; }
+  .cards-wrap thead th.dist { grid-column: 7; text-align: right; }
+  .cards-wrap thead th:is(.band, .utc, .from, .to) { display: none; }
+  .colhead-n { display: inline; }
+
+  /* ── 解碼列（App call_list_holder_item）：兩行固定不折行，訊息太長截斷；圓角 12、框 1px；
+     字級 13／12／10／9px（＝設置的列表字型 16px 時；同 App 的字級偏移，跟著設置加減） ── */
+  .cards-wrap { --p-cols: 0.75em 1.9em 2.15em 2.45em minmax(0, 1fr) minmax(0, 1fr) auto; --side-gap: 16px; }
+  #decodes-panel .cards-wrap tr.card, #call-list-panel .cards-wrap tr.card {
+    grid-template-columns: var(--p-cols); grid-template-areas: "seq snr dt hz msg msg band" "utc utc utc utc to from dist"; /* 第 2 行同 App：[DIC]接收方國名　發話方國名[DIC] */
+    column-gap: 4px; row-gap: 0; padding: 1px 6px 2px; margin: 0 var(--side-gap) 2px 1px; border-radius: 12px; border-width: 1px;
+    font-size: max(7px, calc(var(--feed-font) - 4px)); line-height: 1.3; align-items: baseline;
+  }
+  #decodes-panel .cards-wrap tr.card.mine, #call-list-panel .cards-wrap tr.card.mine { margin: 0 1px 2px var(--side-gap); }
+  .cards-wrap tr.card td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #decodes-panel .cards-wrap td.msg, #call-list-panel .cards-wrap td.msg {
+    grid-column: 5 / 7; white-space: nowrap; overflow-wrap: normal; font-size: calc(var(--feed-font) - 3px);
+    font-family: inherit; padding-left: 2px;
+  }
+  #decodes-panel .cards-wrap td.band, #call-list-panel .cards-wrap td.band { display: block; font-size: max(7px, calc(var(--feed-font) - 7px)); align-self: center; }
+  #decodes-panel .cards-wrap :is(td.utc, td.from, td.to), #call-list-panel .cards-wrap :is(td.utc, td.from, td.to) {
+    font-size: max(7px, calc(var(--feed-font) - 6px)); white-space: nowrap;
+  }
+  #decodes-panel .cards-wrap td.utc, #call-list-panel .cards-wrap td.utc { overflow: visible; }
+  #decodes-panel .cards-wrap td.dist, #call-list-panel .cards-wrap td.dist { font-size: max(7px, calc(var(--feed-font) - 7px)); }
+  #decodes-panel .cards-wrap :is(td.from, td.to), #call-list-panel .cards-wrap :is(td.from, td.to) { display: flex; align-items: center; min-width: 0; }
+  .cards-wrap td.to .marks { order: -1; }
+  .cards-wrap td.from { justify-content: flex-end; padding-right: 2px; }
+  .cards-wrap td.from .marks { order: 2; margin: 0 0 0 2px; }
+  .cards-wrap :is(td.from, td.to) .cty { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .cards-wrap .sig-bars { display: none; } /* App 的 dB 欄只有數字 */
+  .cards-wrap .snr-num { min-width: 0; }
+  .cards-wrap .mk { font-size: 0.95em; min-width: 1.15em; }
+  .cards-wrap .marks { margin: 0 2px 0 0; }
+
+  /* ── 解碼頁 ── */
+  #decodes-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0; border: 0; border-radius: 0; background: transparent; }
+  #decodes-panel > h2, #call-list-panel > h2 { display: none; }
+  #decodes-panel .table-wrap { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  #decodes-panel > #tap-to-start { margin: 4px; }
+
+  /* ── 呼叫頁：呼叫清單（或電台卡）；✎ 打開通聯與發射區塊 ── */
+  #call-list-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0; border: 0; border-radius: 0; background: transparent; }
+  #call-list-panel > .seg, #decodes-panel > .list-filters { margin: 3px 4px; gap: 4px; flex: none; }
+  :is(#call-list-panel, #decodes-panel) .seg-btn { padding: 1px 10px; font-size: 12px; }
+  :is(#call-list-panel, #decodes-panel) .list-time { padding: 1px 6px; font-size: 12px; }
+  #call-list-classic { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  #call-list-empty { margin: 8px; }
+  #station-panel { flex: 1; min-height: 0; overflow-y: auto; border: 0; border-radius: 0; padding: 4px; }
+  #station-panel > h2 { display: none; }
+  body:not(.p-sheet) #qso-panel, body:not(.p-sheet) #tx-panel { display: none !important; }
+  body.p-sheet #qso-panel, body.p-sheet #tx-panel { order: -1; flex: none; border-radius: 0; border-width: 0 0 1px; }
+  body.p-sheet #tx-panel { max-height: 45vh; overflow-y: auto; }
+
+  /* 通聯控制列（→ 順序＋CQ）只在呼叫頁（App fragment_my_calling 底部） */
+  body:not(.p-qsobar) #qso-bar { display: none; }
+  .qso-bar { padding: 4px; gap: 4px; background: var(--p-page); border-top: 0; }
+  .qso-bar select { border: 1px solid var(--p-head-border); border-radius: 8px; padding: 6px 8px; font-size: 16px; background: var(--panel); }
+  .qso-auto { font-size: 13px; }
+  button.cq-btn { background: var(--p-cq); border-color: var(--p-cq); border-radius: 8px; padding: 6px 14px; font: 900 1.35rem/1.1 system-ui, sans-serif; letter-spacing: -0.5px; }
+
+  /* ── 頻譜頁：整頁瀑布圖（App fragment_spectrum 沒有工具列） ── */
+  #spectrum-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 2px 0 0; border: 0; border-radius: 0; background: #000; --spectrum-h: 100%; }
+  #spectrum-panel .spectrum-view { flex: 1; min-height: 0; height: auto; border-radius: 0; }
+  .panel-fold { display: none !important; }
+
+  /* ── 地圖：浮動按鈕開全頁（同 App 另開 GridTracker），返回鈕關閉；頻譜頁只放頻譜 ── */
+  #map-panel { display: none; }
+  body.p-map #map-panel {
+    display: flex; position: fixed; inset: 0; z-index: 46; margin: 0; padding: 0; border: 0; border-radius: 0; background: var(--p-page);
+  }
+  body.p-map #map-panel .map-wrap { flex: 1; min-height: 0; aspect-ratio: auto; border-radius: 0; border: 0; }
+  body.p-map #map-panel .map-legend { margin: 0; padding: 4px 8px calc(4px + env(safe-area-inset-bottom)); }
+  .p-back {
+    display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; flex: none;
+    border: 0; border-radius: 50%; color: #fff; background: var(--p-fab);
+  }
+  #map-back { position: absolute; top: 8px; left: 8px; z-index: 2; box-shadow: 0 1px 4px rgb(0 0 0 / 0.45); } /* 影像底圖上也看得清楚 */
+
+  /* ── 通聯記錄頁：標題列紫色（同 App 工具列） ── */
+  #log-panel { flex: 1; min-height: 0; overflow-y: auto; padding: 0 0 8px; border: 0; border-radius: 0; background: transparent; }
+  #log-panel > h2 {
+    position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 8px; min-height: 48px; margin: 0 0 6px; padding: 4px 10px;
+    background: var(--p-bar); color: var(--p-bar-text); font-size: 18px; border-top: 2px solid transparent;
+  }
+  #log-panel > h2 .count { color: inherit; }
+  #log-panel > h2 button { margin-left: auto; color: #fff; border-color: rgb(255 255 255 / 0.5); padding: 2px 10px; }
+  #log-panel > :not(h2) { margin-left: 6px; margin-right: 6px; }
+
+  /* ── 設置頁：原本的抽屜整頁顯示；接收狀態、時鐘、回報說明在首頁頂端（phone-ui.mjs 搬過來） ── */
+  body[data-ptab="settings"] #menu {
+    position: static; inset: auto; width: auto; flex: 1; min-height: 0; z-index: auto; border: 0; box-shadow: none; padding: 0 8px 8px;
+    background: var(--p-page);
+  }
+  body[data-ptab="settings"] #menu-backdrop { display: none; }
+  #menu .drawer-head {
+    justify-content: center; position: sticky; top: 0; min-height: 46px; margin: 0 -8px 8px; padding: 2px 8px 0; border-top: 2px solid transparent;
+    background: var(--p-bar); color: var(--p-bar-text);
+  }
+  #menu .drawer-head h2 { font-size: 22px; font-weight: normal; letter-spacing: 2px; }
+  #menu-close { display: none; }
+  #menu .drawer-head .lang-quick { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); margin: 0; }
+  #menu .drawer-head .lang-quick select { background: transparent; color: var(--p-bar-text); border-color: rgb(255 255 255 / 0.35); }
+  #menu .drawer-head .lang-quick select option { color: #000; }
+  #menu #status-panel { margin: 0 0 8px; padding: 8px 10px; border-radius: 10px; font-size: 14px; }
+  #menu #status-panel .actions { display: none; } /* 開始／停止在解碼頁工具列右邊 */
+  #menu:has(> #cfg-home[hidden]) > #status-panel { display: none; }
+  #menu .cfg-profile { border: 2px solid #9C7BFF; }
+
+  /* ── 底部 5 分頁（App BottomNavigationView）：線條圖示、選中是紫色藥丸 ── */
+  .tabbar { grid-template-columns: repeat(5, 1fr) !important; background: var(--p-nav); border-top: 0; padding: 6px 0 calc(4px + env(safe-area-inset-bottom)); }
+  .tabbar .tab { color: var(--p-nav-text); padding: 0 0 2px; gap: 3px; font-size: 13px; }
+  .tabbar .tab-icon { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 30px; border-radius: 15px; }
+  .tabbar .tab-icon svg { width: 22px; height: 22px; }
+  .tabbar .tab[aria-selected="true"] { color: var(--p-nav-sel); font-weight: bold; }
+  .tabbar .tab[aria-selected="true"] .tab-icon { background: var(--p-pill); color: var(--p-pill-ink); }
+  body.p-immersive .tabbar { display: none; }
+
+  /* ── 右側浮動按鈕（App FloatView：半透明紫色圓鈕，只在解碼／呼叫／頻譜頁） ── */
+  body.p-fab .fab { display: flex; flex-direction: column; gap: 12px; position: fixed; right: 4px; top: 46%; transform: translateY(-50%); z-index: 30; }
+  .fab-btn {
+    width: 40px; height: 40px; padding: 0; display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid rgb(255 255 255 / 0.25); border-radius: 50%; background: var(--p-fab); color: rgb(255 255 255 / 0.9);
+    -webkit-backdrop-filter: blur(1px); backdrop-filter: blur(1px);
+  }
+  .fab-btn svg { width: 22px; height: 22px; }
+  .fab-btn[aria-pressed="true"], .fab-btn[aria-expanded="true"] { background: var(--p-btn-a); }
+  .fab-menu {
+    position: absolute; right: 48px; top: 52px; display: flex; flex-direction: column; min-width: 96px; padding: 4px 0;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 6px 20px rgb(0 0 0 / 0.3);
+  }
+  .fab-menu[hidden] { display: none; }
+  .fab-menu button { background: transparent; color: var(--text); border: 0; border-radius: 0; padding: 8px 16px; text-align: left; font-weight: bold; }
+  .fab-menu button[aria-checked="true"] { color: var(--p-nav-sel); }
+  .fab-menu button[aria-checked="true"]::before { content: "● "; }
+
+  /* ── JS8 通訊（App Js8Fragment，在「呼叫」的位置）：沉浸式，上方返回鈕、下方瀑布圖 ── */
+  body.mode-js8[data-ptab="call"] #js8-chat-panel,
+  body.mode-jtty[data-ptab="call"] #jtty-chat-panel { flex: 1; min-height: 0; margin: 0; border: 0; border-radius: 0; padding: 6px 8px 4px; }
+  body.mode-chat[data-ptab="call"] #spectrum-panel { order: 2; flex: none; height: 150px; }
+  #js8-back, #jtty-back { width: 32px; height: 32px; }
+  #js8-back svg, #jtty-back svg { width: 20px; height: 20px; }
+  body.mode-jtty[data-ptab="call"] #spectrum-panel { height: 160px; } /* JTTY 多了三欄與 F 鍵兩列；下方再加字幕區兩條（46 px，jtty/ticker-ui.mjs），瀑布圖本身約 110 px */
+}

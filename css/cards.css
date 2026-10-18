@@ -1,0 +1,262 @@
+/* ── 解碼卡片（add-web-transmit 3.2、D16，仿 FT8TW CallingListAdapter／call_list_holder_item）──
+   每則一張圓角卡片：第一行 S. dB Δt Hz 訊息 撥號頻率、第二行 UTC [D I C]發話方國名 接收方國名[D I C] 距離。
+   底色（淺色）：叫我洋紅＋★、關注黃、CQ 綠、已 QSL 台的 CQ 淺綠、與我相關芥末、其他白；深色主題只換訊息字色（同 FT8TW）。
+   外框依一分鐘內的四個時序：0 淺灰細、1 深灰粗、2 中灰細、3 深灰粗（深色改底色深淺）。容器夠寬（≥760px）時排成一行的寬卡。
+   另檔放（不寫進 app.css）：主線同時在改 app.css 的版面。 */
+:root {
+  --c-me: #FF6EC7; --c-me-dark: #FF8AD8; --c-star: #FFFF33;
+  --c-follow: #FFFF33; --c-cq: #00FF00; --c-qsl: #A5D6A7; --c-related: #FFCC66;
+  --card-ink: #000;
+  --q0: #CCCCCC; --q1: #444444; --q2: #888888; --q3: #444444;
+  --q0w: 1px; --q1w: 3px; --q2w: 1px; --q3w: 3px;
+  --q0bg: #fff; --q1bg: #fff; --q2bg: #fff; --q3bg: #fff;
+  --mk: #B71C1C; --mk-bg: #FFF3F3;
+  /* 電台卡（colors.xml station_*） */
+  --st-page: #E9EDF2; --st-card: #FFFFFF; --st-stroke: rgb(20 30 45 / 0.10); --st-ink: #141D28; --st-mute: #556170;
+  --st-dim: #8F99A5; --st-cq: #137A3A; --st-me: #C0247D; --st-me-ink: #FFFFFF; --st-me-tint: rgb(192 36 125 / 0.06); --st-bar-off: rgb(20 29 40 / 0.15);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --card-ink: #fff; --q0: #4A4A4A; --q1: #3A3A3A; --q2: #5A5A5A; --q3: #2E2E2E; --q1w: 1px; --q3w: 1px;
+    --q0bg: #4A4A4A; --q1bg: #3A3A3A; --q2bg: #5A5A5A; --q3bg: #2E2E2E; --mk: #FF8A80; --mk-bg: transparent;
+    --st-page: #0D1117; --st-card: #161D26; --st-stroke: rgb(214 224 236 / 0.09); --st-ink: #E3E8EE; --st-mute: #8C98A6;
+    --st-dim: #5C6775; --st-cq: #5AD88F; --st-me: #FF8AD8; --st-me-ink: #24071A; --st-me-tint: rgb(255 138 216 / 0.09); --st-bar-off: rgb(227 232 238 / 0.15);
+  }
+}
+:root[data-theme="dark"] {
+  --card-ink: #fff; --q0: #4A4A4A; --q1: #3A3A3A; --q2: #5A5A5A; --q3: #2E2E2E; --q1w: 1px; --q3w: 1px;
+  --q0bg: #4A4A4A; --q1bg: #3A3A3A; --q2bg: #5A5A5A; --q3bg: #2E2E2E; --mk: #FF8A80; --mk-bg: transparent;
+  --st-page: #0D1117; --st-card: #161D26; --st-stroke: rgb(214 224 236 / 0.09); --st-ink: #E3E8EE; --st-mute: #8C98A6;
+  --st-dim: #5C6775; --st-cq: #5AD88F; --st-me: #FF8AD8; --st-me-ink: #24071A; --st-me-tint: rgb(255 138 216 / 0.09); --st-bar-off: rgb(227 232 238 / 0.15);
+}
+
+.table-wrap.cards-wrap { overflow-x: visible; container-type: inline-size; }
+.cards-wrap table, .cards-wrap tbody { display: block; width: 100%; }
+/* 欄名只是看不到（卡片沒有對齊的欄），報讀軟體仍讀得到 */
+.cards-wrap thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.cards-wrap tr.card {
+  display: grid;
+  grid-template-columns: auto auto auto auto minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-areas: "seq snr dt hz msg msg band" "utc utc utc utc from to dist";
+  column-gap: 8px; align-items: baseline;
+  margin: 0 var(--side-gap) 4px 0; padding: 3px 10px; border-radius: 10px;
+  color: var(--card-ink); background: var(--q0bg); border: var(--q0w) solid var(--q0);
+}
+.cards-wrap tr.card.q1 { background: var(--q1bg); border: var(--q1w) solid var(--q1); }
+.cards-wrap tr.card.q2 { background: var(--q2bg); border: var(--q2w) solid var(--q2); }
+.cards-wrap tr.card.q3 { background: var(--q3bg); border: var(--q3w) solid var(--q3); }
+.cards-wrap tr.card :where(td) { padding: 0; border: 0; background: transparent; min-width: 0; white-space: nowrap; }
+.cards-wrap td.dt { font-weight: normal; }
+.cards-wrap tr.card.slot-start td { border-top: 0; }
+.cards-wrap td.seq { grid-area: seq; }
+.cards-wrap td.snr { grid-area: snr; text-align: right; }
+.cards-wrap td.snr { white-space: nowrap; }
+/* dB 欄的強度格（SignalBarsView）：低到高遞增，亮格主題色、暗格邊框色 */
+.sig-bars { display: inline-flex; align-items: flex-end; gap: 1px; height: 0.9em; margin-right: 3px; vertical-align: baseline; }
+.sig-bars i { width: 3px; background: var(--border); border-radius: 1px; }
+.sig-bars i:nth-child(1) { height: 30%; }
+.sig-bars i:nth-child(2) { height: 45%; }
+.sig-bars i:nth-child(3) { height: 60%; }
+.sig-bars i:nth-child(4) { height: 80%; }
+.sig-bars i:nth-child(5) { height: 100%; }
+.sig-bars i.on { background: var(--accent); }
+.snr-num { display: inline-block; min-width: 1.8em; text-align: right; }
+.cards-wrap td.dt { grid-area: dt; text-align: right; }
+.cards-wrap td.dt.bold { font-weight: bold; }
+.cards-wrap td.hz { grid-area: hz; text-align: right; }
+.cards-wrap td.msg { grid-area: msg; white-space: normal; overflow-wrap: break-word; font-size: 1.1em; width: auto; font-family: inherit; }
+.cards-wrap td.band { grid-area: band; text-align: right; font-size: 0.8em; }
+.cards-wrap td.utc { grid-area: utc; font-size: 0.85em; }
+.cards-wrap td.from { grid-area: from; font-size: 0.85em; white-space: normal; }
+.cards-wrap td.to { grid-area: to; font-size: 0.85em; white-space: normal; }
+.cards-wrap td.dist { grid-area: dist; font-size: 0.85em; text-align: right; }
+.cards-wrap tr.card.strong td.msg { font-weight: bold; }
+.cards-wrap tr.card.worked td.msg { text-decoration: line-through; }
+/* 靠左／靠右錯開（同 FT8TW CallingListAdapter）：對方的訊息右邊留白，我方（發送方是我）左邊留白；窄畫面留白縮小 */
+.cards-wrap { --side-gap: 40px; }
+@media (max-width: 599px) { .cards-wrap { --side-gap: 16px; } }
+.cards-wrap tr.card.mine { margin: 0 0 4px var(--side-gap); }
+.cards-wrap .marks { display: inline-flex; gap: 2px; vertical-align: middle; margin: 0 3px; }
+.cards-wrap .marks:empty { display: none; }
+.cards-wrap .mk { display: inline-block; min-width: 1.1em; padding: 0 1px; border: 1px solid var(--mk); color: var(--mk); background: var(--mk-bg);
+  font: bold 0.8em/1.15 Georgia, "Times New Roman", serif; text-align: center; }
+.cards-wrap .star { color: var(--c-star); text-shadow: 0 0 1px #000, 0 0 1px #000; }
+
+/* 淺色：換底色（字黑）；深色：只換訊息字色 */
+:root:not([data-theme="dark"]) .cards-wrap tr.card.tone-me { background: var(--c-me); }
+:root:not([data-theme="dark"]) .cards-wrap tr.card.tone-follow { background: var(--c-follow); }
+:root:not([data-theme="dark"]) .cards-wrap tr.card.tone-cq { background: var(--c-cq); }
+:root:not([data-theme="dark"]) .cards-wrap tr.card.tone-cq-qsl { background: var(--c-qsl); }
+:root:not([data-theme="dark"]) .cards-wrap tr.card.tone-related { background: var(--c-related); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .cards-wrap tr.card.tone-me,
+  :root:not([data-theme="light"]) .cards-wrap tr.card.tone-follow,
+  :root:not([data-theme="light"]) .cards-wrap tr.card.tone-cq,
+  :root:not([data-theme="light"]) .cards-wrap tr.card.tone-cq-qsl,
+  :root:not([data-theme="light"]) .cards-wrap tr.card.tone-related { background: var(--q0bg); }
+  :root:not([data-theme="light"]) .cards-wrap tr.card.q1:not(.tone-plain) { background: var(--q1bg); }
+  :root:not([data-theme="light"]) .cards-wrap tr.card.q2:not(.tone-plain) { background: var(--q2bg); }
+  :root:not([data-theme="light"]) .cards-wrap tr.card.q3:not(.tone-plain) { background: var(--q3bg); }
+  :root:not([data-theme="light"]) .cards-wrap tr.card.tone-me td.msg { color: var(--c-me-dark); }
+  :root:not([data-theme="light"]) .cards-wrap tr.card.tone-follow td.msg { color: var(--c-follow); }
+  :root:not([data-theme="light"]) .cards-wrap tr.card.tone-cq td.msg { color: var(--c-cq); }
+  :root:not([data-theme="light"]) .cards-wrap tr.card.tone-cq-qsl td.msg { color: var(--c-qsl); }
+  :root:not([data-theme="light"]) .cards-wrap tr.card.tone-related td.msg { color: var(--c-related); }
+}
+:root[data-theme="dark"] .cards-wrap tr.card.tone-me td.msg { color: var(--c-me-dark); }
+:root[data-theme="dark"] .cards-wrap tr.card.tone-follow td.msg { color: var(--c-follow); }
+:root[data-theme="dark"] .cards-wrap tr.card.tone-cq td.msg { color: var(--c-cq); }
+:root[data-theme="dark"] .cards-wrap tr.card.tone-cq-qsl td.msg { color: var(--c-qsl); }
+:root[data-theme="dark"] .cards-wrap tr.card.tone-related td.msg { color: var(--c-related); }
+.cards-wrap tr.card.selected { outline: 3px solid var(--accent); outline-offset: 1px; }
+#decodes tr.card.selected td, #call-list tr.card.selected td { background: transparent; }
+
+/* 手機窄卡：訊息吃滿第一行（撥號頻率每則都一樣，窄到放不下時省略，留給訊息） */
+@container (max-width: 479px) {
+  .cards-wrap tr.card { grid-template-areas: "seq snr dt hz msg msg band" "utc utc utc utc from to dist"; }
+  .cards-wrap td.band { display: none; }
+  .cards-wrap td.msg { grid-column: 5 / -1; font-size: 1.02em; }
+  .cards-wrap tr.card { column-gap: 6px; padding: 3px 8px; }
+}
+
+/* 容器夠寬：一則一行的寬卡 */
+@container (min-width: 820px) {
+  .cards-wrap tr.card {
+    grid-template-columns: 1em 4.2em 2.4em 2.8em minmax(10em, 2fr) minmax(4em, 1fr) minmax(4em, 1fr) 4.4em 5.6em 4.2em;
+    column-gap: 6px;
+    grid-template-areas: "seq snr dt hz msg from to dist band utc";
+    padding: 2px 10px; margin-bottom: 3px;
+  }
+  .cards-wrap td.msg { font-size: 1.05em; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+  .cards-wrap td.utc { text-align: right; }
+}
+
+/* ── 呼叫清單（呼叫頁中段）── */
+.call-list .seg, .list-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; }
+/* 藏起來的列（其他模式、不符篩選）：tr.card 的 display: grid 會蓋過 [hidden]，要明確藏（使用者 2026-10-09） */
+.cards-wrap tr[hidden] { display: none !important; }
+.call-list .seg[hidden], .list-filters[hidden], #call-list-empty[hidden], #call-list-classic[hidden] { display: none; }
+/* 時間篩選下拉（解碼清單、呼叫清單；使用者 2026-10-09）：與分段按鈕同高的藥丸 */
+.list-filters .list-time { width: auto; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel); color: var(--text); font-size: 0.9rem; max-width: 100%; }
+.seg-btn, .st-chip { padding: 4px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel); color: var(--text); font-size: 0.9rem; }
+.seg-btn[aria-pressed="true"] { background: var(--text); color: var(--panel); border-color: var(--text); }
+#call-list { -webkit-touch-callout: none; }
+#call-list tr { cursor: pointer; }
+.call-list table { font-size: var(--feed-font); }
+
+/* ── 摩登電台卡（D17，station_card_item）── */
+.station-view[hidden] { display: none; }
+.station-view { background: var(--st-page); border-radius: 8px; padding: 8px; font-size: var(--feed-font); }
+.st-tools { display: flex; gap: 8px; margin-bottom: 6px; }
+.st-tools select { width: auto; flex: 0 1 auto; }
+.st-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.st-chip { font-weight: bold; font-size: 0.8rem; padding: 2px 10px; background: var(--st-card); color: var(--st-ink); border-color: var(--st-stroke); }
+.st-chip[aria-pressed="true"] { background: var(--st-ink); color: var(--st-card); border-color: var(--st-ink); }
+.st-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 6px; -webkit-touch-callout: none; }
+.st-card {
+  position: relative; background: var(--st-card); color: var(--st-ink); border: 1px solid var(--st-stroke); border-radius: 7px;
+  padding: 6px 10px 6px 12px; cursor: pointer; overflow: hidden; user-select: none; min-width: 0;
+}
+.st-card::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: transparent; }
+.st-card.cq::before { background: var(--st-cq); }
+.st-card.me { background: linear-gradient(var(--st-me-tint), var(--st-me-tint)), var(--st-card); border-color: color-mix(in srgb, var(--st-me) 45%, transparent); }
+.st-card.me::before { width: 5px; background: var(--st-me); }
+.st-card.worked { opacity: 0.5; }
+.st-card.stale { opacity: 0.62; }
+.st-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.st-l1, .st-l2, .st-l3 { display: flex; align-items: center; gap: 6px; min-width: 0; }
+img.st-flag { height: 1.05em; }
+.st-call { font: bold 1.1em ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.st-card.worked .st-call { font-weight: normal; }
+.st-card.me .st-call { color: var(--st-me); }
+.st-grid { flex: 1; color: var(--st-mute); font-family: ui-monospace, Consolas, monospace; }
+.st-bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; }
+.st-bars i { width: 4px; background: var(--st-bar-off); border-radius: 1px; }
+.st-bars i:nth-child(1) { height: 5px; }
+.st-bars i:nth-child(2) { height: 7px; }
+.st-bars i:nth-child(3) { height: 9px; }
+.st-bars i:nth-child(4) { height: 11px; }
+.st-bars i:nth-child(5) { height: 14px; }
+.st-bars i.on { background: var(--st-ink); }
+.st-snr { min-width: 2.4em; text-align: right; font-variant-numeric: tabular-nums; font-weight: bold; }
+.st-l2 { margin-top: 2px; }
+.st-tags { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; min-width: 0; }
+.st-tag { font-size: 0.68rem; font-weight: bold; line-height: 1.35; padding: 0 5px; border-radius: 4px; border: 1px solid var(--st-ink); white-space: nowrap; }
+.st-tag.t-cq { color: var(--st-cq); border-color: var(--st-cq); }
+.st-tag.t-me { background: var(--st-me); border-color: var(--st-me); color: var(--st-me-ink); }
+.st-tag.t-solid { background: var(--st-ink); color: var(--st-card); }
+.st-tag.t-dashed { border-style: dashed; }
+.st-tag.t-worked { color: var(--st-mute); border-color: var(--st-stroke); }
+.st-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--st-ink); visibility: hidden; flex: none; }
+.st-dot.on { visibility: visible; }
+.st-time { color: var(--st-mute); font-size: 0.8em; font-variant-numeric: tabular-nums; }
+.st-l3 { margin-top: 2px; font-size: 0.82em; color: var(--st-mute); }
+.st-meta { white-space: nowrap; }
+.st-msg { color: var(--st-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; font-family: ui-monospace, Consolas, monospace; }
+.st-empty[hidden] { display: none; }
+
+/* 國旗（flag-icons SVG，使用者 2026-10-06）：高度跟字級走；清單寬度不到 420px（畫不下）就不畫 */
+img.flag { width: auto; height: 0.85em; aspect-ratio: 4 / 3; vertical-align: -0.05em; margin: 0 3px; border-radius: 2px; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.15); }
+@container (max-width: 420px) { .cards-wrap img.flag { display: none; } }
+
+/* 通聯進度 Dashboard（使用者 2026-10-07，參考 S20 呼叫面板階段列）：目前＝實心＋●、已完成＝實線框＋✓、未到＝虛線框＋○（不靠顏色） */
+.qso-dash[hidden] { display: none; }
+.qso-dash { flex: none; margin-top: 8px; padding: 8px; border-radius: 8px; background: var(--st-card); border: 1px solid var(--st-stroke); color: var(--st-ink); }
+.qso-dash-head { font-weight: bold; margin-bottom: 6px; }
+.qso-dash-call { font-family: ui-monospace, Consolas, monospace; font-size: 1.1em; }
+.qso-dash-stages { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+.qso-dash-stages li { text-align: center; border-radius: 6px; padding: 4px 2px; line-height: 1.25; font-size: 0.9rem; }
+.qso-dash-stages li .mark { display: block; }
+.qso-dash-stages li.current { background: var(--st-ink); color: var(--st-card); font-weight: bold; }
+.qso-dash-stages li.done { border: 1px solid var(--st-ink); }
+.qso-dash-stages li.todo { border: 1px dashed var(--muted); color: var(--muted); }
+/* 桌機／平板：電台卡面板上下排，清單捲動、Dashboard 固定在下方 */
+@media (min-width: 600px) {
+  .lists > #station-panel { display: flex; flex-direction: column; overflow: hidden; }
+  #station-panel > .station-view { flex: 1; min-height: 0; overflow-y: auto; }
+}
+/* 手機：整頁捲動，Dashboard 黏在畫面下方 */
+@media (max-width: 599px) {
+  #station-panel .qso-dash { position: sticky; bottom: 0; z-index: 2; box-shadow: 0 -4px 12px rgb(0 0 0 / 0.15); }
+}
+
+/* ── 空清單的雷達掃描（使用者 2026-10-09，FT8TW App 電台卡 stationEmptyBox／RadarSweepView）──
+   3 圈同心圓＋十字刻線＋旋轉掃描扇形（尾巴 0～72% 透明、前緣約 40% 不透明）＋中心小圓點，一圈 3.2 秒。
+   只用明暗、不用色相（使用者是紅綠色盲）：圈 station_bar_off、十字 station_card_stroke、掃描與圓點 station_mute，日夜各一組（--st-*）。
+   純 CSS 動畫：元素 hidden（display: none）或分頁在背景時瀏覽器不畫也不跑。 */
+.radar-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+  min-height: 260px; padding: 16px 24px; box-sizing: border-box; text-align: center; pointer-events: none;
+}
+.radar-empty[hidden] { display: none !important; }
+.radar-text { margin: 0; color: var(--st-mute); font-size: 14px; }
+.radar {
+  position: relative; flex: none; width: 156px; height: 156px; border-radius: 50%;
+  --radar-ring: var(--st-bar-off); --radar-cross: var(--st-stroke);
+  background:
+    linear-gradient(var(--radar-cross), var(--radar-cross)) center / 100% 1px no-repeat,
+    linear-gradient(var(--radar-cross), var(--radar-cross)) center / 1px 100% no-repeat,
+    radial-gradient(circle closest-side,
+      transparent calc(33.33% - 1px), var(--radar-ring) calc(33.33% - 1px) 33.33%,
+      transparent 33.33% calc(66.67% - 1px), var(--radar-ring) calc(66.67% - 1px) 66.67%,
+      transparent 66.67% calc(100% - 1px), var(--radar-ring) calc(100% - 1px) 100%, transparent 100%);
+}
+.radar::before { /* 中心小圓點 */
+  content: ""; position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px;
+  border-radius: 50%; background: var(--st-mute); z-index: 1;
+}
+.radar::after { /* 掃描扇形：順時針轉，前緣在 360° */
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(transparent 0 72%, color-mix(in srgb, var(--st-mute) 40%, transparent) 100%);
+  animation: radar-sweep 3.2s linear infinite;
+}
+@keyframes radar-sweep { to { transform: rotate(1turn); } }
+@media (prefers-reduced-motion: reduce) {
+  .radar::after { animation: none; } /* 靜態扇形 */
+}
+/* 解碼清單、呼叫清單：蓋在清單區正中間（表頭照常） */
+.cards-wrap:has(> .radar-empty:not([hidden])) { position: relative; min-height: 280px; }
+.cards-wrap > .radar-empty { position: absolute; inset: 0; min-height: 0; }
+/* JS8／JTTY 對話區（<ol> 是直向 flex）：margin: auto 置中 */
+.js8c-list > .radar-empty { margin: auto; min-height: 220px; }
+.seg-btn .seg-n { opacity: 0.7; font-variant-numeric: tabular-nums; } /* 篩選按鈕後面的筆數（使用者 2026-10-10，同 FT8TW） */

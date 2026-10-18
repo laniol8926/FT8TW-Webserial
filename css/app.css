@@ -1,0 +1,769 @@
+:root {
+  --bg: #f6f7f9;
+  --panel: #ffffff;
+  --text: #1c2430;
+  --muted: #5b6676;
+  --border: #d9dee5;
+  --accent: #1f6feb;
+  --warn-bg: #fff4d6;
+  --warn-text: #6b4a00;
+  --row-alt: #f2f4f7;
+  --progress: #e0b000;
+  --rx-progress: #0097a7; /* 青色跑馬條（收訊延遲，add-dt-offset-advisor D20）：與頁面底色對比 ≥ 3:1 */
+  --card: #f5f9ff;
+  --card-border: #9cc8f0;
+  --info: #6a1bff;
+  --feed-font: 16px;
+  color-scheme: light dark;
+}
+
+/* 深色：跟隨裝置（設置 › 顯示與佈景 選「裝置設定」），或使用者指定 data-theme（config/ui.mjs） */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11151b;
+    --panel: #1a2029;
+    --text: #e4e8ee;
+    --muted: #98a2b3;
+    --border: #2c3542;
+    --accent: #58a6ff;
+    --warn-bg: #3a2e0c;
+    --warn-text: #f5d58a;
+    --row-alt: #1f2631;
+    --progress: #f5c400;
+    --rx-progress: #26c6da;
+    --card: #1d2530;
+    --card-border: #34506e;
+    --info: #8b6cff;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11151b;
+  --panel: #1a2029;
+  --text: #e4e8ee;
+  --muted: #98a2b3;
+  --border: #2c3542;
+  --accent: #58a6ff;
+  --warn-bg: #3a2e0c;
+  --warn-text: #f5d58a;
+  --row-alt: #1f2631;
+  --progress: #f5c400;
+  --rx-progress: #26c6da;
+  --card: #1d2530;
+  --card-border: #34506e;
+  --info: #8b6cff;
+  color-scheme: dark;
+}
+:root[data-theme="light"] { color-scheme: light; }
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", "Noto Sans TC", sans-serif;
+  /* 除了訊息內容，畫面文字都不給滑鼠選取（使用者 2026-10-07：拖曳、連點時整片反白，畫面花掉） */
+  -webkit-user-select: none;
+  user-select: none;
+}
+/* 可以選取的：輸入框、訊息內容（解碼／呼叫清單的訊息欄、JS8 泡泡本文）、版本字串（回報問題時要複製） */
+input, textarea, [contenteditable="true"], td.msg, .js8c-bubble, #version { -webkit-user-select: text; user-select: text; }
+
+header, main { max-width: 1440px; margin: 0 auto; padding: 0 16px; }
+header { padding-top: 16px; }
+h1 { margin: 0; font-size: 1.4rem; }
+h2 { margin: 0 0 8px; font-size: 1.1rem; }
+.sub { margin: 0 0 12px; color: var(--muted); }
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+
+.field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; border: 0; padding: 0; }
+.field span, .field > label, .field legend, .label { color: var(--muted); font-size: 0.9rem; }
+.mode { flex-direction: row; flex-wrap: wrap; gap: 4px 16px; align-items: center; }
+.mode legend { float: left; margin-right: 8px; }
+
+select, button, input { font: inherit; }
+input { padding: 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text); min-width: 0; }
+.row { display: flex; flex-wrap: wrap; gap: 12px 24px; }
+.row > .field { flex: 1 1 220px; }
+.inline { display: flex; gap: 8px; }
+.inline input { flex: 1; }
+.hint { color: var(--muted); font-size: 0.85rem; margin: 2px 0 0; }
+.error { color: #c62828; font-size: 0.85rem; }
+.warn { background: var(--warn-bg); color: var(--warn-text); border-radius: 6px; padding: 6px 10px; margin: 4px 0; }
+.actions { align-items: center; }
+.error:empty { display: none; }
+input[aria-invalid="true"] { border-color: #c62828; }
+button.secondary { background: transparent; color: var(--accent); white-space: nowrap; }
+select { width: 100%; padding: 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text); }
+
+.actions { display: flex; gap: 8px; }
+button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+button:disabled { opacity: 0.45; cursor: default; }
+#stop { background: transparent; color: var(--accent); }
+
+.status div { margin: 2px 0; }
+.warnings { margin: 8px 0 0; padding: 0; list-style: none; }
+.warnings li { background: var(--warn-bg); color: var(--warn-text); border-radius: 6px; padding: 6px 10px; margin-top: 6px; }
+.warnings:empty { display: none; }
+
+.count { color: var(--muted); font-weight: normal; font-size: 0.9rem; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 4px 8px; white-space: nowrap; }
+th { color: var(--muted); font-weight: normal; border-bottom: 1px solid var(--border); }
+th.num, td.num { text-align: right; }
+td.msg { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+tbody tr:nth-child(even) { background: var(--row-alt); }
+tr.slot-start td { border-top: 1px solid var(--border); }
+
+/* ── 頂列與左側選單 ── */
+.topbar { display: flex; align-items: center; gap: 12px; }
+/* 解碼週期跑馬條（同 FT8TW 頁首的進度線）：固定在頁面最上緣，只用 transform 更新以保持滑順 */
+.slot-progress { position: fixed; top: 0; left: 0; right: 0; height: 4px; background: var(--border); z-index: 50; overflow: hidden; pointer-events: none; }
+.slot-progress .bar { height: 100%; background: var(--progress); transform-origin: left center; transform: scaleX(0); }
+/* 青色跑馬條（add-dt-offset-advisor D20）：緊貼橘色跑馬條下方、同寬同高 */
+.rx-slot-progress { position: fixed; top: 4px; left: 0; right: 0; height: 4px; background: var(--border); z-index: 50; overflow: hidden; pointer-events: none; }
+.rx-slot-progress[hidden] { display: none; }
+.rx-slot-progress .bar { height: 100%; background: var(--rx-progress); transform-origin: left center; transform: scaleX(0); }
+/* 跑馬條下方：模式框框（8＝FT8、4＝FT4）與第幾秒 */
+.slot-tick { display: flex; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.slot-tick[hidden] { display: none; }
+.mode-select { width: auto; padding: 2px 4px; border: 2px solid var(--text); border-radius: 4px; font-weight: bold; }
+/* 頻率下拉（add-web-frequency-list）：摘要列樣式同模式下拉；設置頁的 #band 沿用 .cfg-line 的寬度 */
+.summary-line .freq-select { font-size: 0.95rem; font-variant-numeric: tabular-nums; max-width: 100%; }
+.freqtable { width: min(94vw, 460px); max-height: min(86vh, 640px); padding: 14px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); color: var(--text); }
+.freqtable::backdrop { background: rgb(0 0 0 / 0.2); }
+.freqtable[open] { display: flex; flex-direction: column; gap: 8px; }
+.freqtable h3 { margin: 0; font-size: 1.05rem; }
+.freqtable-head select { width: auto; }
+.freqtable-head, .freqtable-form, .freqtable-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.freqtable-actions { justify-content: space-between; }
+.freqtable-list { flex: 1 1 auto; min-height: 120px; overflow: auto; margin: 0; padding: 0; list-style: none; border: 1px solid var(--border); border-radius: 6px; }
+.freqtable-band { position: sticky; top: 0; padding: 2px 8px; font-weight: bold; background: var(--bg); border-bottom: 1px solid var(--border); }
+.freqtable-row { display: flex; align-items: center; gap: 8px; padding: 2px 8px; font-variant-numeric: tabular-nums; }
+.freqtable-row .freqtable-freq { flex: 1; min-width: 0; }
+.freqtable-row button { padding: 1px 8px; }
+.freqtable-form input[type="text"] { flex: 1 1 110px; width: auto; min-width: 0; }
+.freqtable-msg { flex-basis: 100%; min-height: 1.2em; }
+.slot-second { font-weight: bold; min-width: 3.6em; }
+.topbar h1 { line-height: 1.2; }
+.topbar .sub { margin: 0; }
+.version { color: var(--muted); font-size: 0.8rem; font-weight: normal; margin-left: 6px; white-space: nowrap; }
+button.icon {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  font-size: 1.3rem;
+  line-height: 1;
+  flex: none;
+}
+.backdrop { position: fixed; inset: 0; background: rgb(0 0 0 / 0.35); z-index: 10; }
+.drawer {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: min(420px, 88vw); /* 手機 88vw；平板、桌機 420px */
+  overflow-y: auto;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  padding: 12px 16px;
+  z-index: 11;
+  box-shadow: 2px 0 12px rgb(0 0 0 / 0.2);
+}
+.drawer-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.drawer-head h2 { margin: 0; }
+.drawer h3 { font-size: 1rem; margin: 12px 0 4px; }
+.backdrop[hidden], .drawer[hidden] { display: none; }
+
+.status .actions { margin-bottom: 8px; }
+.detect-result { margin: -4px 0 10px; padding-left: 18px; color: var(--muted); font-size: 0.85rem; }
+.detect-result:empty { display: none; }
+.check { display: flex; gap: 6px; align-items: center; margin-bottom: 10px; color: var(--text); }
+#tap-to-start[hidden] { display: none; }
+
+/* ── RWD：手機 <600px、平板 600～1023px、桌機 ≥1024px ── */
+
+/* 手機：版面同 FT8TW，每則解碼排成兩行卡片——第一行 dB Δt Hz 訊息、第二行 UTC 與本地時間 */
+@media (max-width: 599px) {
+  header, main { padding: 0 8px; }
+  header { padding-top: 10px; }
+  h1 { font-size: 1.15rem; }
+  .topbar { gap: 8px; }
+  .topbar .sub { display: none; }
+  .version { display: block; margin-left: 0; }
+  .panel { padding: 10px 12px; margin-bottom: 8px; }
+  .table-wrap { overflow-x: visible; }
+  .feed table, .feed tbody { display: block; }
+  /* 欄名只是看不到，報讀軟體仍讀得到 */
+  .feed thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .feed tr {
+    display: grid;
+    grid-template-columns: auto auto auto 1fr;
+    grid-template-areas: "snr dt hz msg" "utc utc local local";
+    column-gap: 10px;
+    padding: 6px 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  .feed td { padding: 0; }
+  .feed td.snr { grid-area: snr; }
+  .feed td.dt { grid-area: dt; font-weight: bold; }
+  .feed td.hz { grid-area: hz; }
+  .feed td.msg { grid-area: msg; white-space: normal; overflow-wrap: anywhere; font-size: 1.05em; }
+  .feed td.utc { grid-area: utc; color: var(--muted); font-size: 0.85em; }
+  .feed td.local { grid-area: local; color: var(--muted); font-size: 0.85em; text-align: right; }
+  .feed td.local::before { content: "本地 "; }
+  .feed tr.slot-start td { border-top: 0; }
+  .feed tr.slot-start { border-top: 2px solid var(--border); }
+}
+
+/* 平板與桌機：數字欄緊湊，訊息欄吃掉剩餘寬度 */
+@media (min-width: 600px) {
+  .feed th.msg, .feed td.msg { width: 100%; }
+}
+
+/* ── 滿版 app 版面（使用者 2026-10-06）：頁面本身不捲動；跑馬條、頁首（名稱、版本、狀態列、發射鍵）固定，
+   只有左欄（狀態、通聯、發射）與右欄列表各自捲動。手機用底部分頁，只捲動目前分頁的內容 ── */
+html, body { height: 100%; }
+body { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+body > header { flex: none; width: 100%; }
+main.layout { flex: 1; min-height: 0; width: 100%; overflow: hidden; }
+.lists { display: flex; flex-direction: column; min-height: 0; }
+.lists > .panel { margin-bottom: 0; }
+.list-tabs { display: none; }
+
+@media (max-width: 599px) {
+  main.layout { overflow-y: auto; padding-bottom: 8px; }
+  .tabbar { position: static !important; flex: none; }
+}
+
+/* 平板與桌機：左欄 360px（平板 320px）、右欄列表；兩欄各自捲動 */
+@media (min-width: 600px) {
+  main.layout { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 0 12px; padding-bottom: 12px; }
+  .side { overflow-y: auto; min-height: 0; padding-right: 4px; }
+  .lists { min-height: 0; }
+  .list-tabs { display: flex; gap: 4px; margin-bottom: 6px; flex: none; }
+  .list-tabs .tab { background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 4px 14px; }
+  .list-tabs .tab[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .lists > [data-list-off] { display: none !important; }
+  .lists > .panel { flex: 1; min-height: 0; overflow-y: auto; }
+  .lists > .feed { display: flex; flex-direction: column; overflow: hidden; }
+  .feed .table-wrap { flex: 1; min-height: 0; overflow: auto; }
+  .feed thead th { position: sticky; top: 0; background: var(--panel); z-index: 1; }
+}
+@media (min-width: 1024px) {
+  main.layout { grid-template-columns: 360px minmax(0, 1fr); gap: 0 16px; }
+}
+
+/* ── 發射（add-web-transmit T1）：發射中整條紅色提示，跑馬條也變紅 ── */
+button.danger { background: #c62828; border-color: #c62828; }
+#tx-stop { background: transparent; color: var(--accent); }
+/* 發射訊息浮動視窗（預設畫面中央，可拖曳，記住位置） */
+.tx-banner {
+  position: fixed; z-index: 60; max-width: min(92vw, 520px); background: #c62828; color: #fff; text-align: center; font-weight: bold;
+  padding: 10px 16px; border-radius: 10px; box-shadow: 0 6px 24px rgb(0 0 0 / 0.35); cursor: grab; touch-action: none; user-select: none;
+}
+.tx-banner.dragging { cursor: grabbing; opacity: 0.9; }
+.tx-banner[hidden] { display: none; }
+body.tx-on .slot-progress .bar { background: #c62828; }
+body.tx-armed #tx-panel { border-color: #c62828; }
+#tx-status.error { color: #c62828; }
+
+
+/* 解碼列可選取（單擊）、呼叫（雙擊／長按） */
+#decodes tr { cursor: pointer; }
+#decodes tr.selected td { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+#decodes { -webkit-touch-callout: none; }
+
+/* ── 主頁的設定摘要列（點了開設置抽屜到「基本資訊」）── */
+.summary-bar {
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+  color: var(--text); background: var(--panel); border: 1px solid var(--border); cursor: pointer;
+}
+.summary-bar:hover { border-color: var(--accent); }
+.summary-bar .summary-text { flex: 1; min-width: 0; overflow-wrap: anywhere; font-weight: 600; }
+.summary-bar .chev { color: var(--muted); font-size: 1.3rem; line-height: 1; }
+
+/* ── 設置抽屜（仿 FT8TW 設置：每個項目一張圓角卡片，左標籤、右輸入、i 說明）── */
+.drawer-head { position: sticky; top: 0; margin: -12px -16px 8px; padding: 12px 16px 4px; background: var(--panel); z-index: 1; }
+.cfg-profile { display: flex; align-items: center; gap: 8px; padding: 8px 10px; margin-bottom: 8px; border-radius: 10px; background: #3f0fb0; color: #fff; flex-wrap: wrap; }
+.cfg-profile select { flex: 1; width: auto; background: transparent; color: #fff; border-color: rgb(255 255 255 / 0.4); }
+.cfg-profile select option { color: #000; }
+.cfg-profile .cfg-help { flex-basis: 100%; color: #fff; }
+.cfg-menu { list-style: none; margin: 0 0 10px; padding: 0; border: 1px solid var(--card-border); border-radius: 10px; background: var(--card); overflow: hidden; }
+.cfg-menu li + li { border-top: 1px solid var(--border); }
+.cfg-menu button {
+  width: 100%; display: flex; justify-content: space-between; align-items: center; text-align: left;
+  padding: 12px 14px; border: 0; border-radius: 0; background: transparent; color: var(--text); font-size: 1.05rem;
+}
+.cfg-menu button::after { content: "›"; color: var(--muted); font-size: 1.3rem; line-height: 1; }
+.cfg-menu button:hover, .cfg-menu button:focus-visible { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.cfg-page[hidden] { display: none; }
+.cfg-back { background: transparent; border: 0; color: var(--muted); padding: 6px 2px; margin-bottom: 6px; font-size: 1rem; }
+.cfg-card {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: start;
+  background: var(--card); border: 1px solid var(--card-border); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px;
+}
+.cfg-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.cfg-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.cfg-tile-source .cfg-break { flex-basis: 100%; height: 0; } /* 「自訂」換下一行（使用者 2026-10-09） */
+.cfg-line > select, .cfg-line > input:not([type="checkbox"], [type="radio"]) { flex: 1 1 140px; width: auto; min-width: 0; }
+.cfg-line > .cfg-short { flex: 1 1 90px; max-width: 160px; }
+.cfg-line > .cfg-tiny { flex: 0 1 80px; }
+.cfg-line > .cfg-auto { flex: 0 1 auto; }
+.cfg-line legend { float: left; margin-right: 8px; padding: 0; }
+.cfg-label { color: var(--text); font-size: 1rem; }
+.cfg-line.switch { justify-content: space-between; flex-wrap: nowrap; cursor: pointer; }
+.cfg-line.switch .cfg-label { flex: 1; min-width: 0; }
+.cfg-line.switch input { width: 2.4em; height: 1.3em; accent-color: var(--info); }
+.cfg-range { width: 100%; accent-color: var(--info); }
+.cfg-card .info, .cfg-profile .info {
+  width: 32px; height: 32px; padding: 0; border-radius: 50%; border: 0; background: var(--info); color: #fff;
+  font: bold 1rem/1 Georgia, serif; flex: none;
+}
+.cfg-profile .info { background: #fff; color: #3f0fb0; }
+.cfg-card .info[aria-expanded="true"], .cfg-profile .info[aria-expanded="true"] { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cfg-help { grid-column: 1 / -1; font-size: 0.9rem; color: var(--text); border-top: 1px dashed var(--card-border); padding-top: 6px; }
+.cfg-help p { margin: 0 0 4px; overflow-wrap: anywhere; }
+.cfg-help[hidden] { display: none; }
+.cfg-card.soon .cfg-body > :not(.soon-badge) { opacity: 0.55; }
+/* 線上地圖來源（add-map-tile-source）：自訂表單；網址樣板很長，輸入框占滿一行、說明可在任意處換行（手機寬不橫向捲動） */
+.cfg-tile-custom { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.cfg-tile-custom[hidden] { display: none; }
+.cfg-tile-custom .cfg-line > input { flex: 1 1 100%; }
+#cfg-tile-card .hint { overflow-wrap: anywhere; }
+#cfg-tile-card input[aria-invalid="true"] { border-color: #c62828; outline-color: #c62828; }
+.soon-badge { align-self: flex-start; font-size: 0.8rem; color: var(--warn-text); background: var(--warn-bg); border-radius: 999px; padding: 0 8px; }
+.cfg-confirm[hidden] { display: none; }
+.cfg-confirm .warn { margin: 0 0 6px; }
+.chips { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; }
+.chips:empty { display: none; }
+.chips li { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--card-border); border-radius: 999px; padding: 0 4px 0 10px; font-family: ui-monospace, Consolas, monospace; }
+.chip-del { background: transparent; border: 0; color: var(--muted); padding: 2px 6px; }
+.links { margin: 0; padding-left: 18px; }
+.drawer a { color: var(--accent); }
+
+/* FT8TW Logo（使用者 2026-10-09）：Logo 本身是深色方形底，圓角讓淺色、深色主題都清楚 */
+.topbar h1 .brand-logo { width: 32px; height: 32px; border-radius: 7px; vertical-align: middle; margin: -6px 8px -4px 0; } /* 上下負邊距：不撐高標題列 */
+.about-brand { display: flex; align-items: center; gap: 12px; }
+.about-brand p { margin: 0; }
+.about-logo { flex: none; width: 72px; height: 72px; border-radius: 14px; }
+/* 關於頁連到「更新歷程」：看起來像連結的按鈕（切頁不離開網頁） */
+.link-button { background: transparent; border: 0; padding: 0; color: var(--accent); font: inherit; cursor: pointer; text-align: left; }
+.link-button:hover { text-decoration: underline; }
+/* 更新歷程：每版一個 <details>，新的在上面；項目文字可折行（手機不可橫向捲動） */
+.changelog-tools { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.changelog { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.changelog details { border: 1px solid var(--card-border); border-radius: 8px; padding: 6px 10px; }
+.changelog summary { cursor: pointer; font-weight: 600; overflow-wrap: anywhere; -webkit-user-select: text; user-select: text; }
+.changelog summary .date { color: var(--muted); font-weight: normal; margin-left: 6px; }
+.changelog ul { margin: 6px 0 2px; padding-left: 20px; }
+.changelog li { overflow-wrap: anywhere; -webkit-user-select: text; user-select: text; }
+#cfg-invalid[hidden] { display: none; }
+
+/* 列表字型大小（設置 › 顯示與佈景，8–26 px）：config/ui.mjs 設定 --feed-font */
+.feed table, .qso-list { font-size: var(--feed-font); }
+
+/* 狀態列（跑馬條下方，同 FT8TW 頁首）：模式、第幾秒、週期 發射/目前、UTC、發射／停止鍵 */
+.status-strip { margin-left: auto; display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 4px 12px; font-variant-numeric: tabular-nums; }
+.strip-item { white-space: nowrap; color: var(--muted); }
+.strip-item strong { color: var(--text); }
+.strip-item[hidden] { display: none; }
+/* 電台控制（add-web-rig-control）：設置 › 電台與聲音 */
+.rig-cat { display: grid; gap: 8px; margin-top: 8px; }
+.rig-cat[hidden] { display: none; }
+.rig-actions { gap: 8px; }
+.rig-actions > button { flex: 0 1 auto; }
+#rig-unsupported[hidden], #rig-warning[hidden], #rig-noswr[hidden], #rig-ptt-stuck[hidden] { display: none; }
+/* PTT 關可能沒送出（安全審查 #1）：設定頁與發射浮窗都要醒目 */
+.rig-ptt-stuck { margin: 4px 0; padding: 8px 10px; border-radius: 6px; background: #c62828; color: #fff; font-weight: 700; }
+.tx-banner .ptt-stuck { display: block; margin-top: 4px; padding: 6px 8px; border-radius: 4px; background: #fff; color: #b71c1c; font-weight: 700; }
+.tx-banner .ptt-stuck:only-child { margin-top: 0; }
+#rig-field-error:empty { display: none; }
+button.tx-toggle { background: transparent; color: var(--text); border: 1px solid var(--border); padding: 6px 10px; white-space: nowrap; }
+button.tx-toggle[aria-pressed="true"] { background: #c62828; border-color: #c62828; color: #fff; }
+.clear-btn { width: 32px; height: 32px; font-size: 1rem; margin-left: 8px; vertical-align: middle; }
+@media (max-width: 599px) {
+  .topbar { flex-wrap: wrap; }
+  .status-strip { width: 100%; justify-content: space-between; }
+}
+
+/* ── 手機底部分頁（同 FT8TW：解碼／呼叫／頻譜／通聯記錄）；平板與桌機不用分頁 ── */
+.tabbar { display: none; }
+@media (max-width: 599px) {
+  .tabbar {
+    display: grid; grid-template-columns: repeat(4, 1fr); z-index: 40;
+    background: var(--panel); border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tabbar .tab {
+    background: transparent; border: 0; color: var(--muted); padding: 6px 0 8px; display: flex; flex-direction: column;
+    align-items: center; gap: 2px; font-size: 0.8rem; border-radius: 0;
+  }
+  .tabbar .tab[aria-selected="true"] { color: var(--accent); font-weight: bold; }
+  .tab-icon { font-size: 1.2rem; line-height: 1; }
+  [data-tab-off] { display: none !important; }
+}
+
+/* 通聯記錄（簡易清單，完整記錄頁在 T5）：卡片左側雙方呼號網格、右側時間報告頻段（同 FT8TW 通聯記錄頁） */
+.qso-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.qso-card { border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; display: grid; grid-template-columns: auto 1fr; gap: 2px 16px; }
+.qso-card .calls { font-weight: bold; }
+.qso-card .calls small, .qso-card .meta { color: var(--muted); font-weight: normal; }
+.qso-card .meta { text-align: right; font-variant-numeric: tabular-nums; }
+.qso-card .qrz-link { font-size: 0.85em; font-weight: normal; color: var(--accent); }
+#qso-empty:not([hidden]) + * { display: none; }
+
+/* 通聯控制列（畫面最下方固定，同 FT8TW 呼叫頁底部「→ 6 CQ … ▾ [CQ]」）：自動回應 CQ｜通聯順序 1～6｜CQ */
+.qso-bar {
+  flex: none; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center;
+  padding: 6px 16px; background: var(--panel); border-top: 1px solid var(--border);
+}
+.qso-auto { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.qso-bar select { width: 100%; font-size: 1.05rem; padding: 8px; }
+.qso-bar select:disabled { opacity: 0.7; }
+button.cq-btn { background: #6a1b9a; border-color: #6a1b9a; font-weight: bold; font-size: 1.1rem; padding: 8px 18px; }
+@media (max-width: 599px) {
+  .qso-bar { padding: 6px 8px; }
+}
+
+/* ── 頻譜／瀑布圖（add-web-transmit D21）：底色固定黑（同 FT8TW，配色是黑→藍→青→白，不隨深淺色變），
+   畫布大小隨容器；高度可由版面以 --spectrum-h 覆寫（例如手機「頻譜」分頁占滿） ── */
+.spectrum { --spectrum-h: clamp(240px, 55vh, 640px); }
+.spectrum-view { position: relative; height: var(--spectrum-h); background: #000; border-radius: 6px; overflow: hidden; }
+.spectrum-view canvas { display: block; width: 100%; height: 100%; cursor: crosshair; touch-action: manipulation; }
+/* 提示只在滑鼠停在頻譜上時出現（觸控裝置沒有 hover，不顯示） */
+.spectrum-hint {
+  position: absolute; top: 34px; right: 6px; padding: 2px 8px; /* 頻率刻度（30 px）下面一列，不遮刻度（使用者 2026-10-07） */ border-radius: 4px; pointer-events: none;
+  background: rgb(0 0 0 / 0.65); color: #fff; font-size: 0.8rem; opacity: 0; transition: opacity 0.15s;
+}
+@media (hover: hover) { .spectrum-view:hover .spectrum-hint { opacity: 1; } }
+/* JTTY 字幕區（使用者 2026-10-09，web/js/jtty/ticker-ui.mjs）：瀑布圖下方，底色同瀑布圖固定黑（各台顏色在深淺主題都一樣清楚）。
+   高度固定為最多條數（桌機 3、手機 2），條數變動時瀑布圖不跟著跳；文字靠右、舊字往左被推出去 */
+.jtty-ticker { display: none; --tk-lanes: 3; --tk-line: 20px; }
+body.mode-jtty .jtty-ticker {
+  display: flex; flex-direction: column; justify-content: flex-start; flex: none; box-sizing: border-box;
+  height: calc(var(--tk-lanes) * var(--tk-line) + 6px); margin-top: 3px; padding: 3px 6px; overflow: hidden;
+  background: #000; color: #e8e8e8; border-radius: 6px;
+  font: 13px/var(--tk-line) ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+@media (max-width: 599px) { .jtty-ticker { --tk-lanes: 2; } }
+.tk-lane { display: flex; align-items: center; gap: 6px; height: var(--tk-line); min-width: 0; transition: opacity 1.5s; }
+.tk-lane.fading { opacity: 0; }
+.tk-tag { flex: none; display: inline-flex; align-items: center; gap: 4px; color: var(--tk-color); font-weight: bold; min-width: 7.5ch; }
+.tk-swatch { width: 10px; height: 10px; border-radius: 2px; background: var(--tk-color); }
+.tk-text { flex: 1; min-width: 0; display: flex; justify-content: flex-end; overflow: hidden; white-space: pre; }
+.tk-inner { flex: none; white-space: pre; }
+.tk-incomplete { opacity: 0.55; }
+.tk-sep { color: #8a8a8a; }
+.tk-dots { flex: none; width: 1.5ch; color: var(--tk-color); visibility: hidden; }
+.tk-lane.receiving .tk-dots { visibility: visible; animation: tk-blink 1s steps(2, start) infinite; }
+@keyframes tk-blink { to { visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) {
+  .tk-lane { transition: none; }
+  .tk-lane.receiving .tk-dots { animation: none; }
+}
+/* 瀑布圖顯示調整（右鍵／長按，同 FT8TW）：靠下擺放，調整時看得到瀑布圖 */
+.spectrum-adjust {
+  margin: auto auto 16px; width: min(92vw, 380px); padding: 14px 16px; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--panel); color: var(--text);
+}
+.spectrum-adjust::backdrop { background: rgb(0 0 0 / 0.15); }
+.spectrum-adjust h3 { margin: 0 0 10px; font-size: 1.05rem; }
+.spectrum-adjust > label:not(.check) { display: block; font-variant-numeric: tabular-nums; }
+.spectrum-adjust input[type="range"] { width: 100%; margin: 4px 0 0; }
+.spectrum-adjust .hint { margin: 0 0 10px; }
+.spectrum-adjust input[role="switch"] { accent-color: #00bcd4; }
+.spectrum-adjust-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+@media (max-width: 599px) { .spectrum { --spectrum-h: clamp(220px, 60vh, 560px); } }
+
+/* ── 地圖（web/js/map/，仿 FT8TW 呼叫面板小地圖）：配色同 FT8TW station_* 色票，深淺色各一組。
+   區塊可放在任何容器：canvas 寬度隨容器、高度由 aspect-ratio 決定（至少 180px） ── */
+.map {
+  --map-sea: #B9D9F0; --map-land: #F2F1EA; --map-coast: #8A96A3; --map-ink: #141D28; /* 海洋淺藍、陸地米白（使用者 2026-10-07：原本都偏灰分不清） */
+  --map-halo: #FFFFFF; --map-other: #556170; --map-cq: #137A3A; --map-callme: #C0247D;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .map {
+    --map-sea: #0E2A44; --map-land: #2A323D; --map-coast: #5C6775; --map-ink: #E3E8EE;
+    --map-halo: #161D26; --map-other: #8C98A6; --map-cq: #5AD88F; --map-callme: #FF8AD8;
+  }
+}
+:root[data-theme="dark"] .map {
+  --map-sea: #0E2A44; --map-land: #2A323D; --map-coast: #5C6775; --map-ink: #E3E8EE;
+  --map-halo: #161D26; --map-other: #8C98A6; --map-cq: #5AD88F; --map-callme: #FF8AD8;
+}
+.map { display: flex; flex-direction: column; min-width: 0; }
+/* 地圖設定（add-map-settings-globe）：國界、國名配色；3D 地球背景不要全黑（使用者 2026-10-08：顏色不要那麼深） */
+.map {
+  --map-border: #7A6283; --map-border-img: rgba(255, 255, 255, 0.75); /* 國界比州界粗、深（州界淡虛線，overlays.overlayStyle） */
+  --map-name: #4A5563; --map-name-halo: rgba(255, 255, 255, 0.85); --map-name-img: #FFFFFF; --map-name-halo-img: rgba(10, 20, 30, 0.6);
+  --map-sat-lift: rgb(62 80 106); /* 2D 衛星影像提亮（screen 疊色） */
+  --globe-bg: radial-gradient(circle at 50% 45%, #FFFFFF 0%, #EAF2FA 55%, #D3E2F0 100%);
+  --globe-glow: #6FA8E8; --globe-glow-strength: 0.6; --globe-route: #141D28;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .map {
+    --map-border: #BBA3C4; --map-name: #B8C3CF; --map-name-halo: rgba(22, 29, 38, 0.85);
+    --globe-bg: radial-gradient(circle at 50% 45%, #3E5672 0%, #2A3B50 55%, #1E2B3B 100%);
+    --globe-glow: #8CC8FF; --globe-glow-strength: 0.7; --globe-route: #F2F5F8;
+    --globe-sea: #3F6F99; --globe-land: #A9B7A2; --globe-coast: #D8E2EA; --globe-border: #F0E6F4;
+  }
+}
+:root[data-theme="dark"] .map {
+  --map-border: #BBA3C4; --map-name: #B8C3CF; --map-name-halo: rgba(22, 29, 38, 0.85);
+  --globe-bg: radial-gradient(circle at 50% 45%, #3E5672 0%, #2A3B50 55%, #1E2B3B 100%);
+  --globe-glow: #8CC8FF; --globe-glow-strength: 0.7; --globe-route: #F2F5F8;
+  --globe-sea: #3F6F99; --globe-land: #A9B7A2; --globe-coast: #D8E2EA; --globe-border: #F0E6F4;
+}
+.map-wrap:has(.map-globe) { background: var(--globe-bg); }
+.map-wrap canvas.map-globe-overlay { pointer-events: none; }
+.map-wrap canvas[hidden] { display: none; }
+.map-gear { display: inline-flex; align-items: center; justify-content: center; padding: 2px 6px; }
+.map-gear svg { display: block; }
+.map-notice {
+  position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 2; margin: 0; padding: 6px 10px; border-radius: 6px;
+  background: var(--map-btn-bg); color: var(--text); border: 1px solid var(--map-btn-border); font-size: 0.85rem; box-shadow: var(--map-btn-shadow);
+}
+/* EOX 規定的標示（add-map-eox-imagery D10）：右下角、小字、半透明底；右上角是按鈕，不重疊。出現時提示訊息往上移 */
+.map-attribution {
+  position: absolute; right: 4px; bottom: 4px; z-index: 2; max-width: calc(100% - 8px); margin: 0; padding: 1px 5px; border-radius: 3px;
+  font-size: 10px; line-height: 1.35; text-align: right; color: #1E2730; background: rgb(255 255 255 / 0.8); pointer-events: auto;
+}
+.map-attribution[hidden] { display: none; }
+.map-attribution a { color: #0B4F9C; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .map-attribution { color: #DCE3EA; background: rgb(18 24 32 / 0.8); }
+  :root:not([data-theme="light"]) .map-attribution a { color: #9CC8FF; }
+}
+:root[data-theme="dark"] .map-attribution { color: #DCE3EA; background: rgb(18 24 32 / 0.8); }
+:root[data-theme="dark"] .map-attribution a { color: #9CC8FF; }
+.map-wrap[data-attribution="eox"] .map-notice { bottom: 46px; }
+.map-settings {
+  width: min(92vw, 340px); padding: 14px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); color: var(--text);
+}
+.map-settings::backdrop { background: rgb(0 0 0 / 0.2); }
+.map-settings h3 { margin: 0 0 10px; font-size: 1.05rem; }
+.map-settings fieldset { margin: 0 0 10px; padding: 6px 10px 2px; border: 1px solid var(--border); border-radius: 8px; }
+.map-settings legend { padding: 0 4px; color: var(--muted); font-size: 0.85rem; }
+.map-settings .check { margin-bottom: 6px; }
+.map-settings .hint { margin: 0 0 8px; }
+.map-settings .hint:empty { display: none; }
+.map-settings .map-credit { font-size: 0.75rem; }
+.map-settings-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+/* 全覽浮在地圖右上角（使用者 2026-10-07 拿掉地圖的標題列與篩選） */
+.map-tools { position: absolute; top: 6px; right: 6px; z-index: 1; display: flex; gap: 6px; }
+/* 地圖上的按鈕（使用者 2026-10-09：衛星影像、地形淡色時看不清楚）：button.secondary 的透明底（0,1,1）原本蓋過 .map-fit 的底色，
+   改用 .map-tools .map-fit（0,2,0）給不透明底色、細框、細陰影，深淺色主題各一組 */
+.map { --map-btn-bg: #FFFFFF; --map-btn-text: #1A4F8A; --map-btn-border: rgb(0 0 0 / 0.22); --map-btn-shadow: 0 1px 3px rgb(0 0 0 / 0.35); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .map { --map-btn-bg: #1F2833; --map-btn-text: #9CC8FF; --map-btn-border: rgb(255 255 255 / 0.22); --map-btn-shadow: 0 1px 3px rgb(0 0 0 / 0.6); }
+}
+:root[data-theme="dark"] .map { --map-btn-bg: #1F2833; --map-btn-text: #9CC8FF; --map-btn-border: rgb(255 255 255 / 0.22); --map-btn-shadow: 0 1px 3px rgb(0 0 0 / 0.6); }
+.map-fit { padding: 2px 10px; font-size: 0.85rem; }
+.map-tools .map-fit { background: var(--map-btn-bg); color: var(--map-btn-text); border: 1px solid var(--map-btn-border); box-shadow: var(--map-btn-shadow); opacity: 1; }
+.map-tools .map-fit[aria-pressed="false"] { color: var(--muted); text-decoration: line-through; } /* 連線關閉 */
+.map-wrap { position: relative; width: 100%; aspect-ratio: 4 / 3; min-height: 180px; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+.map-wrap canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+.map-wrap canvas:active { cursor: grabbing; }
+.map-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; }
+.map-legend .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-left: 4px; }
+.map-legend .dot.cq { background: var(--map-cq); }
+.map-legend .dot.callme { background: var(--map-callme); box-shadow: 0 0 0 1.5px var(--map-halo), 0 0 0 3px var(--map-callme); }
+.map-legend .dot.target { background: var(--map-halo); border: 2.5px solid var(--map-ink); }
+.map-legend .dot.other { background: var(--map-other); }
+.map-legend .dot.mine { background: var(--map-ink); }
+/* 清單選取的電台（add-map-overlays E、C5）：藍色光環（避開 CQ Zone 橘、叫我洋紅、CQ 綠、ITU 藍綠），
+   畫的時候先墊一道光暈色（selection.drawSelectedMark），衛星影像、海上都看得清楚 */
+.map { --map-selected: #1F5FD6; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .map { --map-selected: #7DB4FF; } }
+:root[data-theme="dark"] .map { --map-selected: #7DB4FF; }
+.map-legend .dot.selected { background: var(--map-other); box-shadow: 0 0 0 1.5px var(--map-halo), 0 0 0 3.5px var(--map-selected); margin-left: 6px; }
+
+/* ── 版面（使用者 2026-10-06）：平板／桌機左欄上頻譜、下地圖（各占一半、隨視窗高度）；
+   右欄列表切換 解碼／呼叫／通聯記錄／控制（接收狀態、通聯、發射） ── */
+.control-group > .panel { margin-bottom: 12px; }
+@media (min-width: 600px) {
+  /* 頻譜與地圖 3:2；各有最小高度，視窗太矮時左欄自己捲動（瀑布圖太矮會放不下訊息標記） */
+  .side { display: flex; flex-direction: column; overflow-y: auto; }
+  .side > .summary-bar { flex: none; }
+  .side > #spectrum-panel, .side > #map-panel { min-height: 0; margin-bottom: 8px; display: flex; flex-direction: column; overflow: hidden; }
+  /* 高度比例由分隔線調整（--spec-grow／--map-grow，web/js/sidelayout.mjs）；收折時只留收折列，另一塊占滿 */
+  .side > #spectrum-panel { flex: var(--spec-grow, 3) 1 0; min-height: 140px; }
+  .side > #map-panel { flex: var(--map-grow, 2) 1 0; min-height: 110px; }
+  .side > #spectrum-panel.collapsed, .side > #map-panel.collapsed { flex: none; min-height: 0; } /* 要比上面的 id 選擇器更具體 */
+  .side-split { flex: none; height: 10px; margin: -4px 0 4px; cursor: row-resize; border-radius: 5px; position: relative; touch-action: none; }
+  .side-split::after { content: ""; position: absolute; left: 50%; top: 3px; width: 44px; height: 4px; margin-left: -22px; border-radius: 2px; background: var(--border); }
+  .side-split:hover::after, .side-split:focus-visible::after { background: var(--accent); }
+  .side-split[hidden] { display: none; }
+  .side > #spectrum-panel { --spectrum-h: 100%; }
+  .side > #spectrum-panel .spectrum-view { flex: 1; min-height: 0; height: auto; }
+  .side > #map-panel .map-wrap { flex: 1; min-height: 0; aspect-ratio: auto; }
+  .lists > .control-group { flex: 1; min-height: 0; overflow-y: auto; }
+  .lists > .control-group[data-list-off] { display: none !important; }
+  /* 左右欄中間是直分隔線（#col-split，占一欄、取代原本的欄距）；--side-w＝使用者拖過的左欄寬（web/js/sidelayout.mjs，
+     使用者 2026-10-10），沒拖過用預設 */
+  main.layout { grid-template-columns: var(--side-w, 40%) 12px minmax(0, 1fr); column-gap: 0; }
+  .col-split { cursor: col-resize; border-radius: 5px; position: relative; touch-action: none; }
+  .col-split::after { content: ""; position: absolute; top: 50%; left: 50%; width: 4px; height: 44px; margin: -22px 0 0 -2px; border-radius: 2px; background: var(--border); }
+  .col-split:hover::after, .col-split:focus-visible::after, body.col-dragging .col-split::after { background: var(--accent); }
+  .col-split:focus-visible { outline: none; }
+  .col-split.col-split-off { visibility: hidden; pointer-events: none; } /* 窄平板放不下兩欄最窄寬度：用預設寬度（sidelayout.mjs widthAdjustable） */
+  body.col-dragging { user-select: none; cursor: col-resize; }
+}
+@media (min-width: 1024px) {
+  main.layout { grid-template-columns: var(--side-w, minmax(380px, 42%)) 16px minmax(0, 1fr); column-gap: 0; }
+}
+
+/* 電台卡分頁（使用者 2026-10-06）；手機「呼叫」分頁依設置二選一顯示呼叫清單或電台卡 */
+@media (max-width: 599px) {
+  body.modern-calling #call-list-panel, body:not(.modern-calling) #station-panel { display: none !important; }
+}
+
+/* 右鍵（手機長按）選單（同 FT8TW 長按選單） */
+.ctx-menu {
+  position: fixed; z-index: 70; min-width: 220px; max-width: min(92vw, 360px); background: var(--panel); color: var(--text);
+  border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 28px rgb(0 0 0 / 0.3); padding: 4px 0;
+}
+.ctx-menu[hidden] { display: none; }
+.ctx-title { padding: 6px 12px 4px; color: var(--muted); font-size: 0.85rem; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+.ctx-item { display: block; width: 100%; text-align: left; background: transparent; color: var(--text); border: 0; border-radius: 0; padding: 8px 12px; }
+.ctx-item:hover, .ctx-item:focus { background: color-mix(in srgb, var(--accent) 16%, transparent); outline: none; }
+
+/* 發射中浮動框緩慢閃爍（使用者 2026-10-06：增加識別度，一眼看出正在發射）；
+   減少動態效果的使用者改成不閃、只保留紅色外框光暈 */
+@keyframes tx-pulse {
+  0%, 100% { background: #c62828; box-shadow: 0 0 0 0 rgb(198 40 40 / 0.6), 0 6px 24px rgb(0 0 0 / 0.35); }
+  50% { background: #8e1515; box-shadow: 0 0 0 10px rgb(198 40 40 / 0), 0 6px 24px rgb(0 0 0 / 0.35); }
+}
+.tx-banner:not([hidden]) { animation: tx-pulse 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .tx-banner:not([hidden]) { animation: none; box-shadow: 0 0 0 4px rgb(198 40 40 / 0.5), 0 6px 24px rgb(0 0 0 / 0.35); }
+}
+
+/* 多語系：翻譯套用前不顯示（index.html 開頭的 inline script 加上、i18n applyDom 移除；3 秒保險） */
+html.i18n-pending body { visibility: hidden; }
+
+/* 抽屜標題右邊的快速切換語言（使用者 2026-10-07） */
+.drawer-head .lang-quick { display: inline-flex; align-items: center; gap: 4px; margin: 0 8px 0 auto; font-size: 1.1rem; }
+.drawer-head .lang-quick select { width: auto; padding: 2px 6px; font-size: 0.9rem; }
+
+/* 支持 FT8TW 開發（漢堡選單「關於」下方，同 App 用 Ko-fi）：外觀同選單項目、強調色 */
+.cfg-menu .donate-link {
+  display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; font-size: 1.05rem; font-weight: bold;
+  color: var(--accent); text-decoration: none;
+}
+.cfg-menu .donate-link::after { content: "↗"; color: var(--muted); font-weight: normal; }
+.cfg-menu .donate-link:hover, .cfg-menu .donate-link:focus-visible { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+
+/* 頻譜／地圖收折鈕（使用者 2026-10-07：不要文字占空間，放白框左上角）：16 px 見方，剛好落在白框左內距裡，不蓋到內容 */
+#spectrum-panel, #map-panel { position: relative; }
+.panel-fold {
+  position: absolute; top: 0; left: 0; z-index: 3; width: 16px; height: 16px; padding: 0; margin: 0;
+  display: flex; align-items: center; justify-content: center; background: transparent; border: 0; border-radius: 6px 0 4px 0;
+  color: var(--text); opacity: 0.65; font-size: 14px; line-height: 1; cursor: pointer;
+}
+.panel-fold:hover, .panel-fold:focus-visible { opacity: 1; background: var(--row-alt); }
+.panel-fold .chev { display: inline-flex; transition: transform 0.15s; }
+.panel-fold svg { display: block; }
+.panel.collapsed > .panel-fold .chev { transform: rotate(-90deg); }
+/* 收起時才出現名稱（使用者 2026-10-07）：展開時只有小箭頭 */
+.panel-fold .fold-label { display: none; margin-left: 4px; font-size: 0.85rem; }
+.panel.collapsed > .panel-fold { width: auto; height: 100%; padding: 0 10px 0 5px; border-radius: 6px; }
+.panel.collapsed > .panel-fold .fold-label { display: inline; }
+/* 收折只是平板／桌機左欄的功能：手機上（頻譜分頁、地圖全頁）留著的收折狀態不生效（code review） */
+@media (min-width: 600px) {
+  .panel.collapsed { padding-top: 0; padding-bottom: 0; height: 26px; min-height: 26px !important; }
+  .panel.collapsed > :not(.panel-fold) { display: none !important; }
+}
+@media (max-width: 599px) { .side-split, .col-split { display: none; } }
+
+/* 免責宣告（使用者 2026-10-08）：全頁擋住，只有「我同意」 */
+.disclaimer { max-width: min(520px, calc(100vw - 32px)); border: 0; border-radius: 12px; padding: 20px 22px; background: var(--panel); color: var(--text); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35); }
+.disclaimer::backdrop { background: rgba(0, 0, 0, 0.6); }
+.disclaimer h2 { margin: 0 0 10px; font-size: 1.15rem; }
+.disclaimer p { margin: 0 0 18px; line-height: 1.6; }
+.disclaimer-actions { display: flex; justify-content: flex-end; }
+.disclaimer-actions button { min-width: 120px; padding: 10px 18px; font-size: 1rem; border: 0; border-radius: 8px; background: var(--accent); color: #fff; cursor: pointer; }
+
+/* 電台自動設定精靈（add-rig-autosetup） */
+.rig-wiz { max-width: min(94vw, 480px); }
+.rig-wiz::backdrop { background: rgb(0 0 0 / 0.25); }
+.rig-wiz h3 { margin: 0 0 8px; font-size: 1.05rem; }
+.rig-wiz fieldset { margin: 0 0 10px; padding: 6px 10px 4px; border: 1px solid var(--border); border-radius: 8px; }
+.rig-wiz section[hidden] { display: none; }
+.rig-wiz .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.rig-wiz-steps { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0 0 10px; padding: 0; list-style: none; font-size: 0.85rem; color: var(--muted); }
+.rig-wiz-steps li[aria-current="step"] { color: inherit; font-weight: 600; }
+.rig-wiz-meter { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
+.rig-wiz-meter meter { flex: 1; min-width: 0; }
+.rig-wiz-readout { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; margin: 8px 0; }
+.rig-wiz-readout dd { margin: 0; font-variant-numeric: tabular-nums; }
+.rig-wiz-nav { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.rig-wiz-nav [hidden] { display: none; }
+#rig-wiz-hold { touch-action: none; user-select: none; -webkit-user-select: none; }
+#rig-wiz-hold.holding { outline: 3px solid currentColor; outline-offset: 2px; }
+
+/* 設定組（add-web-profiles）：＋ ✎ ✕、紫色條紋＝隨設定組切換（同 App） */
+.cfg-profile .profile-btn { min-width: 32px; padding: 2px 8px; background: transparent; color: #fff; border: 1px solid rgb(255 255 255 / 0.5); border-radius: 6px; }
+.cfg-profile .profile-btn:disabled, .cfg-profile .profile-btn[aria-disabled="true"] { opacity: 0.4; }
+.cfg-profile-hint { flex-basis: 100%; opacity: 0.85; }
+.cfg-profile-edit input { width: 100%; margin: 4px 0; }
+.profile-scoped { box-shadow: inset 4px 0 0 #7e3ff2; padding-left: 8px; }
+/* 新版提示／強制更新等待（add-version-tracking）：頁面最上方一整條；手機版面也顯示 */
+.update-banner { flex: none; display: block; width: 100%; margin: 0; padding: 8px 12px; border: 0; border-radius: 0; background: var(--accent); color: #fff; font: inherit; font-weight: bold; text-align: center; cursor: pointer; }
+.update-banner[hidden] { display: none; }
+.update-banner[data-state="required"] { background: #b26a00; cursor: default; opacity: 1; }
+/* 時間偏差提醒（add-dt-offset-advisor）：文字＋套用／忽略，窄螢幕換行 */
+/* 底色 #9a5b00：白字對比約 5.4:1（≥ 4.5，D19；#update-banner 的 #b26a00 不動） */
+.dt-banner { flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 12px; padding: 8px 12px; background: #9a5b00; color: #fff; font-weight: bold; text-align: center; }
+.dt-banner[hidden] { display: none; }
+.dt-banner-text { min-width: 0; overflow-wrap: anywhere; }
+.dt-banner-actions { display: inline-flex; gap: 8px; }
+.dt-banner button { font-weight: bold; }
+.dt-banner button.secondary { color: #fff; border: 1px solid #fff; } /* 橘底上看得清楚 */
+.dt-banner #dt-apply { background: #fff; border-color: #fff; color: #6b3f00; } /* 白底深橘字，深淺主題都清楚 */
+main.layout:focus { outline: none; } /* 套用／忽略後焦點移到主內容（程式設定，tabindex=-1） */
+/* 取消偏差調整（D21）：桌機在模式下拉左邊；按下展開行內確認 */
+.rxdelay-ctl { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.rxdelay-ctl[hidden], .rxdelay-confirm[hidden], .rxdelay-ctl button[hidden] { display: none; }
+.rxdelay-ctl button { padding: 4px 10px; }
+.rxdelay-cancel { border: 1px solid var(--rx-progress); }
+.rxdelay-confirm { display: inline-flex; align-items: center; gap: 6px; }
+.p-rxdelay { display: none; } /* 手機才有（phone.css） */
+/* 摘要列後面的電台資訊組（add-rig-meters M1、M3）：狀態點＋型號、實際頻率、S 表、SWR（S20 App 的 <SWR> 小標籤；≥3.0 紅底） */
+.summary-line { display: flex; flex-wrap: wrap; align-items: center; column-gap: 12px; row-gap: 2px; }
+.rig-meters { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.rig-meters[hidden], .rig-meters > [hidden] { display: none; }
+.rm-dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: #9e9e9e; }
+.rig-meters.rm-on .rm-dot { background: #2e7d32; }
+.rm-freq { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.rm-freq.rm-moved { color: var(--warn-text); } /* 電台被調離選的頻率（add-web-frequency-list）：「電台 14.080 MHz」 */
+.rm-s, .rm-swr { padding: 0 5px; border: 1px solid currentColor; border-radius: 3px; font-weight: 600; font-size: 0.85em; line-height: 1.4; font-variant-numeric: tabular-nums; }
+.rm-s { color: var(--text); }
+.rm-swr { color: #c62828; }
+.rm-swr.rm-high { background: #c62828; border-color: #c62828; color: #fff; }
+
+/* ── 矮螢幕（手機橫放：寬 ≥ 600 走桌機版面，但高 < 500；使用者 2026-10-18）：整頁可以捲動，頁首跟著捲走；
+   左右兩欄高度＝一個螢幕扣掉底部通聯控制列，往下捲就看得到完整列表；通聯控制列固定在畫面底部 ── */
+@media (min-width: 600px) and (max-height: 499px) {
+  html, body { height: auto; }
+  body { min-height: 100dvh; overflow: visible; }
+  main.layout { flex: none; height: max(240px, calc(100dvh - var(--qso-bar-h, 56px))); }
+  .qso-bar { position: sticky; bottom: 0; z-index: 20; }
+}

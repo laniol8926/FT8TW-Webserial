@@ -1,0 +1,31 @@
+// 字典：dash 區（電台卡下方的通聯進度 Dashboard）
+export default {
+  en: {
+    'dash.grid': 'Grid',
+    'dash.report': 'Report',
+    'dash.rReport': 'R-Report',
+    'dash.rr73': 'RR73',
+    'dash.73': '73',
+    'dash.cq': 'Calling CQ',
+    'dash.completed': 'QSO complete',
+    'dash.stopped': 'TX stopped',
+    'dash.stepAria': '{stage}: {state}',
+    'dash.done': 'done',
+    'dash.current': 'now',
+    'dash.todo': 'not yet',
+  },
+  'zh-TW': {
+    'dash.grid': '網格',
+    'dash.report': '報告',
+    'dash.rReport': 'R報告',
+    'dash.rr73': 'RR73',
+    'dash.73': '73',
+    'dash.cq': 'CQ 中',
+    'dash.completed': '通聯完成',
+    'dash.stopped': '已停止發射',
+    'dash.stepAria': '{stage}：{state}',
+    'dash.done': '已完成',
+    'dash.current': '目前',
+    'dash.todo': '未到',
+  },
+};

@@ -1,0 +1,120 @@
+// 由 tools/gen-rig-models.mjs 從 FT8TW App 的 rigaddress.txt 產生，請勿手改（重新產生會覆蓋）。
+// 每組對應 App 選單的一段（#Break 分隔）；civ＝CI-V 位址、baud＝預設鮑率、set＝指令集（rig/sets.mjs）。
+export const MODEL_GROUPS = Object.freeze([
+  [
+    { name: "BG2FX FX-4CR", civ: 0x00, baud: 115200, set: 7 },
+  ],
+  [
+    { name: "Elecraft K3", civ: 0x00, baud: 38400, set: 10 },
+    { name: "Elecraft K3S", civ: 0x00, baud: 38400, set: 10 },
+    { name: "Elecraft KX2", civ: 0x00, baud: 38400, set: 10 },
+    { name: "Elecraft KX3", civ: 0x00, baud: 38400, set: 10 },
+  ],
+  [
+    { name: "GUOHE Q900", civ: 0x00, baud: 19200, set: 8 },
+    { name: "GUOHE PMR-171", civ: 0x00, baud: 19200, set: 8 },
+  ],
+  [
+    { name: "ICOM IC-703", civ: 0x68, baud: 19200, set: 0 },
+    { name: "ICOM IC-705", civ: 0xA4, baud: 115200, set: 0 },
+    { name: "ICOM IC-706MKIIG", civ: 0x58, baud: 19200, set: 0 },
+    { name: "ICOM IC-706MKII", civ: 0x4E, baud: 19200, set: 0 },
+    { name: "ICOM IC-707(725A)", civ: 0x3E, baud: 19200, set: 0 },
+    { name: "ICOM IC-718", civ: 0x5E, baud: 19200, set: 0 },
+    { name: "ICOM IC-725", civ: 0x28, baud: 19200, set: 0 },
+    { name: "ICOM IC-775", civ: 0x46, baud: 19200, set: 0 },
+    { name: "ICOM IC-746", civ: 0x56, baud: 19200, set: 22 },
+    { name: "ICOM IC-746PRO", civ: 0x66, baud: 19200, set: 22 },
+    { name: "ICOM IC-756PRO", civ: 0x5C, baud: 19200, set: 22 },
+    { name: "ICOM IC-756PRO2", civ: 0x64, baud: 19200, set: 22 },
+    { name: "ICOM IC-756PRO3", civ: 0x6E, baud: 19200, set: 22 },
+    { name: "ICOM IC-7000", civ: 0x70, baud: 19200, set: 0 },
+    { name: "ICOM IC-7100", civ: 0x88, baud: 19200, set: 0 },
+    { name: "ICOM IC-7200", civ: 0x76, baud: 19200, set: 0 },
+    { name: "ICOM IC-7300", civ: 0x94, baud: 115200, set: 0 },
+    { name: "ICOM IC-7300MK2", civ: 0xB6, baud: 115200, set: 0 },
+    { name: "ICOM IC-7400", civ: 0x66, baud: 19200, set: 0 },
+    { name: "ICOM IC-7410", civ: 0x80, baud: 19200, set: 0 },
+    { name: "ICOM IC-7600", civ: 0x7A, baud: 19200, set: 0 },
+    { name: "ICOM IC-7610", civ: 0x98, baud: 115200, set: 0 },
+    { name: "ICOM IC-7700", civ: 0x74, baud: 19200, set: 0 },
+    { name: "ICOM IC-7800", civ: 0x6A, baud: 19200, set: 0 },
+    { name: "ICOM IC-7850", civ: 0x8E, baud: 115200, set: 0 },
+    { name: "ICOM IC-7851", civ: 0x8E, baud: 115200, set: 0 },
+    { name: "ICOM IC-9100", civ: 0x7C, baud: 19200, set: 0 },
+    { name: "ICOM IC-9700", civ: 0xA2, baud: 115200, set: 0 },
+    { name: "ICOM IC-R8600", civ: 0x96, baud: 115200, set: 0 },
+    { name: "ICOM IC-910H", civ: 0x60, baud: 19200, set: 0 },
+    { name: "ICOM IC-78", civ: 0x62, baud: 19200, set: 0 },
+    { name: "ICOM ID-52A", civ: 0xA6, baud: 115200, set: 0 },
+  ],
+  [
+    { name: "KENWOOD TK-90", civ: 0x00, baud: 9600, set: 5 },
+    { name: "KENWOOD TS-440", civ: 0x00, baud: 4800, set: 27 },
+    { name: "KENWOOD TS-480", civ: 0x00, baud: 9600, set: 7 },
+    { name: "KENWOOD TS-570", civ: 0x00, baud: 4800, set: 18 },
+    { name: "KENWOOD TS-590", civ: 0x00, baud: 9600, set: 7 },
+    { name: "KENWOOD TS-2000", civ: 0x00, baud: 9600, set: 14 },
+  ],
+  [
+    { name: "LAB599 TX-500MP", civ: 0x00, baud: 9600, set: 24 },
+  ],
+  [
+    { name: "mcHF-QRP sdr", civ: 0x00, baud: 4800, set: 1 },
+  ],
+  [
+    { name: "OTHER KN990", civ: 0x00, baud: 38400, set: 1 },
+  ],
+  [
+    { name: "QRPLabs QDX", civ: 0x00, baud: 9600, set: 7 },
+    { name: "QRPLabs QMX", civ: 0x00, baud: 9600, set: 23 },
+    { name: "QRPLabs QMX+", civ: 0x00, baud: 9600, set: 23 },
+  ],
+  [
+    { name: "QuantumSDR", civ: 0x00, baud: 19200, set: 7 },
+  ],
+  [
+    { name: "(tr)uSDX (audio over cat)", civ: 0x00, baud: 115200, set: 17 },
+    { name: "(tr)uSDX (TS-480)", civ: 0x00, baud: 9600, set: 7 },
+  ],
+  [
+    { name: "UA3REO Wolf SDR(DIGU)", civ: 0x00, baud: 4800, set: 15 },
+    { name: "UA3REO Wolf SDR(USB)", civ: 0x00, baud: 4800, set: 16 },
+    { name: "WB2CBA Pebble HF", civ: 0x00, baud: 4800, set: 0 },
+    { name: "WB2CBA TDX", civ: 0x00, baud: 4800, set: 0 },
+    { name: "WB2CBA TinyDX", civ: 0x00, baud: 4800, set: 0 },
+    { name: "XIEGU X6100(U-DIG)", civ: 0xA4, baud: 19200, set: 13 },
+    { name: "XIEGU X6200(U-DIG)", civ: 0xA4, baud: 19200, set: 13 },
+    { name: "XIEGU G90S(U-DIG)", civ: 0x70, baud: 19200, set: 13 },
+    { name: "XIEGU G90S(USB)", civ: 0x70, baud: 19200, set: 9 },
+    { name: "XIEGU G106C(U-DIG)", civ: 0x70, baud: 19200, set: 13 },
+    { name: "XIEGU G106C(USB)", civ: 0x70, baud: 19200, set: 9 },
+    { name: "XIEGU X5105", civ: 0x70, baud: 19200, set: 9 },
+    { name: "XIEGU X108", civ: 0x70, baud: 19200, set: 9 },
+  ],
+  [
+    { name: "YAESU FT-450(D)", civ: 0x00, baud: 4800, set: 4 },
+    { name: "YAESU FT-817", civ: 0x00, baud: 4800, set: 1 },
+    { name: "YAESU FT-818", civ: 0x00, baud: 4800, set: 1 },
+    { name: "YAESU FT-847", civ: 0x00, baud: 4800, set: 21 },
+    { name: "YAESU FT-857", civ: 0x00, baud: 4800, set: 1 },
+    { name: "YAESU FT-891(USB)", civ: 0x00, baud: 4800, set: 2 },
+    { name: "YAESU FT-891(DATA-USB)", civ: 0x00, baud: 4800, set: 19 },
+    { name: "YAESU FT-991(USB)", civ: 0x00, baud: 4800, set: 2 },
+    { name: "YAESU FT-991(DATA-USB)", civ: 0x00, baud: 4800, set: 19 },
+    { name: "YAESU FT-897(D)", civ: 0x00, baud: 4800, set: 1 },
+    { name: "YAESU FT-950", civ: 0x00, baud: 4800, set: 3 },
+    { name: "YAESU FT-2000(D)", civ: 0x00, baud: 4800, set: 3 },
+    { name: "YAESU FT-710", civ: 0x00, baud: 38400, set: 26 },
+    { name: "YAESU FT-DX10", civ: 0x00, baud: 38400, set: 6 },
+    { name: "YAESU FT-DX101", civ: 0x00, baud: 38400, set: 6 },
+    { name: "YAESU FT-DX Other series", civ: 0x00, baud: 4800, set: 3 },
+    { name: "YAESU FTX1", civ: 0x00, baud: 4800, set: 25 },
+  ],
+].map((g) => Object.freeze(g.map((m) => Object.freeze(m)))));
+
+export const MODELS = Object.freeze(MODEL_GROUPS.flat());
+
+export function findModel(name) {
+  return MODELS.find((m) => m.name === name) ?? null;
+}
