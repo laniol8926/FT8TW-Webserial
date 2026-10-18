@@ -10,7 +10,6 @@ import { checkMaidenhead, gridDistanceKm } from '../country/geo.mjs';
 import { SLOT_MS } from '../slot.mjs';
 import { signalBars } from '../station/signal.mjs';
 import { countryName } from '../country/db.mjs';
-import { formatMHz } from '../freqlist.mjs';
 import { formatUtc, formatUtcTenths } from '../format.mjs';
 import { t } from '../i18n/index.mjs';
 
@@ -98,11 +97,6 @@ export function rowsForMode(rows, mode) {
   return mode ? rows.filter((r) => r.mode === mode) : rows;
 }
 
-// 撥號頻率文字（BaseRigOperation.getFrequencyStr）：14.074MHz
-export function dialText(dialHz) {
-  return Number.isFinite(dialHz) && dialHz > 0 ? `${formatMHz(dialHz)}MHz` : ''; // 7.0475 不四捨五入（code review 2026-10-09）
-}
-
 // 一則解碼的卡片內容。row：{ text, snr, freqHz, timeSec, startUtc, mode, own? }（own＝我方發射）
 // ctx：{ myCall, myGrid, follow: Set, worked, lookup(call), gridOf(call), dialHz }
 export function cardModel(row, ctx) {
@@ -150,7 +144,6 @@ export function cardModel(row, ctx) {
     toMarks: row.own ? null : zoneMarks(toInfo, worked),
     km,
     grid,
-    band: dialText(row.dialHz ?? ctx.dialHz), // 收到當時的撥號頻率；舊資料沒有才用目前的（Codex 2026-10-09）
   };
 }
 

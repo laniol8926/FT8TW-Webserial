@@ -98,7 +98,7 @@
   .pbar-rig .rm-swr.rm-high { background: #c62828; color: #fff; }
   .pbar-r2 { text-align: right; } /* UTC 一律靠右，不靠 :has()（舊瀏覽器，review C4） */
 
-  /* ── 欄名列「S. dB Δt 頻率 訊息(n/總數) 距離」：固定在清單上方，欄位與卡片對齊 ── */
+  /* ── 欄名列「UTC S. dB Δt 頻率 訊息(n/總數) 距離」：固定在清單上方，欄位與卡片對齊 ── */
   #decodes-panel .cards-wrap thead, #call-list-panel .cards-wrap thead {
     position: sticky; top: 0; z-index: 3; display: block; width: auto; height: auto; overflow: visible; clip-path: none; white-space: nowrap;
     background: var(--p-page); padding: 1px 1px 2px;
@@ -108,30 +108,30 @@
     padding: 1px 6px; border: 1px solid var(--p-head-border); border-radius: 6px; font-size: 12px; line-height: 1.5;
   }
   .cards-wrap thead th { padding: 0; border: 0; color: var(--text); font-weight: normal; background: transparent; position: static; }
-  .cards-wrap thead th.seq { grid-column: 1; }
-  .cards-wrap thead th.snr { grid-column: 2; text-align: right; }
-  .cards-wrap thead th.dt { grid-column: 3; text-align: right; }
-  .cards-wrap thead th.hz { grid-column: 4; text-align: right; }
-  .cards-wrap thead th.msg { grid-column: 5 / 7; text-align: center; }
+  .cards-wrap thead th.utc { grid-column: 1; }
+  .cards-wrap thead th.seq { grid-column: 2; }
+  .cards-wrap thead th.snr { grid-column: 3; text-align: right; }
+  .cards-wrap thead th.dt { grid-column: 4; text-align: right; }
+  .cards-wrap thead th.hz { grid-column: 5; text-align: right; }
+  .cards-wrap thead th.msg { grid-column: 6; text-align: center; }
   .cards-wrap thead th.dist { grid-column: 7; text-align: right; }
-  .cards-wrap thead th:is(.band, .utc, .from, .to) { display: none; }
+  .cards-wrap thead th:is(.from, .to) { display: none; }
   .colhead-n { display: inline; }
 
-  /* ── 解碼列（App call_list_holder_item）：兩行固定不折行，訊息太長截斷；圓角 12、框 1px；
+  /* ── 解碼列（App call_list_holder_item）：一行固定不折行，訊息太長截斷；圓角 12、無邊框；
      字級 13／12／10／9px（＝設置的列表字型 16px 時；同 App 的字級偏移，跟著設置加減） ── */
-  .cards-wrap { --p-cols: 0.75em 1.9em 2.15em 2.45em minmax(0, 1fr) minmax(0, 1fr) auto; --side-gap: 16px; }
+  .cards-wrap { --p-cols: 2.6em 0.75em 1.9em 2.15em 2.45em minmax(0, 1fr) 2.6em minmax(3em, 1fr) minmax(3em, 1fr); --side-gap: 16px; }
   #decodes-panel .cards-wrap tr.card, #call-list-panel .cards-wrap tr.card {
-    grid-template-columns: var(--p-cols); grid-template-areas: "seq snr dt hz msg msg band" "utc utc utc utc to from dist"; /* 第 2 行同 App：[DIC]接收方國名　發話方國名[DIC] */
-    column-gap: 4px; row-gap: 0; padding: 1px 6px 2px; margin: 0 var(--side-gap) 2px 1px; border-radius: 12px; border-width: 1px;
+    grid-template-columns: var(--p-cols); grid-template-areas: "utc seq snr dt hz msg dist from to";
+    column-gap: 4px; row-gap: 0; padding: 1px 6px 2px; margin: 0 var(--side-gap) 2px 1px; border-radius: 12px; border: 0;
     font-size: max(7px, calc(var(--feed-font) - 4px)); line-height: 1.3; align-items: baseline;
   }
   #decodes-panel .cards-wrap tr.card.mine, #call-list-panel .cards-wrap tr.card.mine { margin: 0 1px 2px var(--side-gap); }
   .cards-wrap tr.card td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #decodes-panel .cards-wrap td.msg, #call-list-panel .cards-wrap td.msg {
-    grid-column: 5 / 7; white-space: nowrap; overflow-wrap: normal; font-size: calc(var(--feed-font) - 3px);
+    white-space: nowrap; overflow-wrap: normal; font-size: calc(var(--feed-font) - 3px);
     font-family: inherit; padding-left: 2px;
   }
-  #decodes-panel .cards-wrap td.band, #call-list-panel .cards-wrap td.band { display: block; font-size: max(7px, calc(var(--feed-font) - 7px)); align-self: center; }
   #decodes-panel .cards-wrap :is(td.utc, td.from, td.to), #call-list-panel .cards-wrap :is(td.utc, td.from, td.to) {
     font-size: max(7px, calc(var(--feed-font) - 6px)); white-space: nowrap;
   }
