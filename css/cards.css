@@ -35,7 +35,7 @@
 .cards-wrap thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .cards-wrap tr.card {
   display: grid;
-  grid-template-columns: 4.2em 1em 2.2em 2.2em 2.3em minmax(11em, 2fr) minmax(2.5em, 1fr) minmax(2.5em, 1fr) 4.4em;
+  grid-template-columns: 4.2em 0.85em 1.8em 1.8em 1.9em minmax(13em, 2fr) minmax(1.8em, 1fr) minmax(1.8em, 1fr) 4.4em;
   grid-template-areas: "utc seq snr dt hz msg from to dist";
   column-gap: 8px; align-items: baseline;
   margin: 0 var(--side-gap) 4px 0; padding: 3px 10px; border-radius: 10px;
@@ -47,15 +47,15 @@
 .cards-wrap tr.card :where(td) { padding: 0; border: 0; background: transparent; min-width: 0; white-space: nowrap; }
 .cards-wrap td.dt { font-weight: normal; }
 .cards-wrap tr.card.slot-start td { border-top: 0; }
-.cards-wrap td.seq { grid-area: seq; }
-.cards-wrap td.snr { grid-area: snr; text-align: right; }
+.cards-wrap td.seq { grid-area: seq; font-size: 0.75em; }
+.cards-wrap td.snr { grid-area: snr; text-align: right; font-size: 0.75em; }
 .cards-wrap td.snr { white-space: nowrap; }
 .snr-num { display: inline-block; min-width: 1.8em; text-align: right; }
-.cards-wrap td.dt { grid-area: dt; text-align: right; }
+.cards-wrap td.dt { grid-area: dt; text-align: right; font-size: 0.75em; }
 .cards-wrap td.dt.bold { font-weight: bold; }
-.cards-wrap td.hz { grid-area: hz; text-align: right; }
-.cards-wrap td.msg { grid-area: msg; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.7em; width: auto; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
-.cards-wrap td.utc { grid-area: utc; font-size: 0.85em; }
+.cards-wrap td.hz { grid-area: hz; text-align: right; font-size: 0.75em; }
+.cards-wrap td.msg { grid-area: msg; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.95em; width: auto; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.cards-wrap td.utc { grid-area: utc; font-size: 0.8em; }
 .cards-wrap td.from { grid-area: from; font-size: 0.85em; overflow: hidden; text-overflow: ellipsis; }
 .cards-wrap td.to { grid-area: to; font-size: 0.85em; overflow: hidden; text-overflow: ellipsis; }
 .cards-wrap td.dist { grid-area: dist; font-size: 0.85em; text-align: right; }

@@ -104,8 +104,8 @@
     background: var(--p-page); padding: 1px 1px 2px;
   }
   .cards-wrap thead tr {
-    display: grid; grid-template-columns: var(--p-cols); column-gap: 4px; align-items: center;
-    padding: 1px 6px; border: 1px solid var(--p-head-border); border-radius: 6px; font-size: 12px; line-height: 1.5;
+    display: grid; grid-template-columns: var(--p-cols); column-gap: 2px; align-items: center;
+    padding: 1px 6px; border: 0; font-size: 12px; line-height: 1.5;
   }
   .cards-wrap thead th { padding: 0; border: 0; color: var(--text); font-weight: normal; background: transparent; position: static; }
   .cards-wrap thead th.utc { grid-column: 1; }
@@ -120,16 +120,19 @@
 
   /* ── 解碼列（App call_list_holder_item）：一行固定不折行，訊息太長截斷；圓角 12、無邊框；
      字級 13／12／10／9px（＝設置的列表字型 16px 時；同 App 的字級偏移，跟著設置加減） ── */
-  .cards-wrap { --p-cols: 4.2em 0.75em 1.9em 2.15em 2.45em minmax(11em, 1fr) minmax(1em, 1fr) minmax(1em, 1fr) 4.4em; --side-gap: 16px; }
+  .cards-wrap { --p-cols: 4.2em 0.65em 1.6em 1.8em 2em minmax(13.6em, 1fr) minmax(0.8em, 1fr) minmax(0.8em, 1fr) 4.4em; --side-gap: 16px; }
   #decodes-panel .cards-wrap tr.card, #call-list-panel .cards-wrap tr.card {
     grid-template-columns: var(--p-cols); grid-template-areas: "utc seq snr dt hz msg from to dist";
-    column-gap: 4px; row-gap: 0; padding: 1px 6px 2px; margin: 0 var(--side-gap) 2px 1px; border-radius: 12px; border: 0;
+    column-gap: 2px; row-gap: 0; padding: 1px 6px 2px; margin: 0 var(--side-gap) 2px 1px; border-radius: 12px; border: 0;
     font-size: max(7px, calc(var(--feed-font) - 4px)); line-height: 1.3; align-items: baseline;
   }
   #decodes-panel .cards-wrap tr.card.mine, #call-list-panel .cards-wrap tr.card.mine { margin: 0 1px 2px var(--side-gap); }
   .cards-wrap tr.card td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #decodes-panel .cards-wrap :is(td.seq, td.snr, td.dt, td.hz), #call-list-panel .cards-wrap :is(td.seq, td.snr, td.dt, td.hz) {
+    font-size: max(6px, calc(var(--feed-font) - 6px));
+  }
   #decodes-panel .cards-wrap td.msg, #call-list-panel .cards-wrap td.msg {
-    white-space: nowrap; overflow-wrap: normal; font-size: calc(var(--feed-font) - 7px);
+    white-space: nowrap; overflow-wrap: normal; font-size: calc(var(--feed-font) - 4px);
     font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; padding-left: 2px;
   }
   #decodes-panel .cards-wrap :is(td.utc, td.from, td.to), #call-list-panel .cards-wrap :is(td.utc, td.from, td.to) {
