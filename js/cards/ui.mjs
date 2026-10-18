@@ -49,9 +49,9 @@ function snrCell(m) {
   return td;
 }
 
-// 把一列填成卡片：欄位順序＝thead 的欄名（UTC S. dB Δt Hz 訊息 距離 發話方 接收方）
+// 把一列填成卡片：欄位順序＝thead 的欄名（UTC S. dB Δt Hz 訊息 發話方 接收方 距離）
 // 撥號頻率欄已拿掉：畫面上方已經常駐顯示目前波段／頻率，每列再重複一次是多餘的（使用者需求）
-// UTC 移到最前、距離搬到原撥號頻率的位置（使用者需求）
+// UTC 移到最前；距離移到最後貼齊右邊，與手機版一致（使用者需求）
 export function fillCard(tr, m, startUtc) {
   const keep = tr.classList.contains('slot-start') ? 'slot-start ' : '';
   const sel = tr.classList.contains('selected') ? ' selected' : '';
@@ -67,8 +67,8 @@ export function fillCard(tr, m, startUtc) {
   to.append(flagImg(m.toFlag), el('span', 'cty', m.toCountry), marksEl(m.toMarks));
   const cells = [
     el('td', 'utc', m.utcText ?? formatUtc(startUtc)), el('td', 'seq', String(m.seq)), snrCell(m),
-    el('td', `num dt${m.dtBold ? ' bold' : ''}`, m.dt), el('td', 'num hz', m.hz), msg,
-    el('td', 'num dist', m.km === null ? '' : `${m.km} km`), from, to,
+    el('td', `num dt${m.dtBold ? ' bold' : ''}`, m.dt), el('td', 'num hz', m.hz), msg, from, to,
+    el('td', 'num dist', m.km === null ? '' : `${m.km} km`),
   ];
   for (const td of cells) td.setAttribute('role', 'cell');
   tr.replaceChildren(...cells);

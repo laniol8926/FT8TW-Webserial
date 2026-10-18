@@ -35,8 +35,8 @@
 .cards-wrap thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .cards-wrap tr.card {
   display: grid;
-  grid-template-columns: 4.2em 1em 2.2em 2.2em 2.3em minmax(10em, 2fr) 4.4em minmax(3em, 1fr) minmax(3em, 1fr);
-  grid-template-areas: "utc seq snr dt hz msg dist from to";
+  grid-template-columns: 4.2em 1em 2.2em 2.2em 2.3em minmax(7em, 2fr) minmax(2.5em, 1fr) minmax(2.5em, 1fr) 4.4em;
+  grid-template-areas: "utc seq snr dt hz msg from to dist";
   column-gap: 8px; align-items: baseline;
   margin: 0 var(--side-gap) 4px 0; padding: 3px 10px; border-radius: 10px;
   color: var(--card-ink); background: var(--q0bg); border: 0;

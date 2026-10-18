@@ -1199,7 +1199,7 @@
         <!-- 明確的 role：手機版把列改成 grid 卡片後，瀏覽器會丟掉表格語意，報讀軟體就讀不到欄名 -->
         <table role="table">
           <thead role="rowgroup">
-            <tr role="row"><th role="columnheader" class="seq">S.</th><th role="columnheader" class="num snr">dB</th><th role="columnheader" class="num dt">Δt</th><th role="columnheader" class="num hz" data-i18n="page.col.hz">頻率</th><th role="columnheader" class="msg"><span data-i18n="page.col.msg">訊息</span><span class="colhead-n"></span></th><th role="columnheader" class="band" data-i18n="page.col.dial">撥號頻率</th><th role="columnheader" class="utc">UTC</th><th role="columnheader" class="from" data-i18n="page.col.from">發話方</th><th role="columnheader" class="to" data-i18n="page.col.to">接收方</th><th role="columnheader" class="num dist" data-i18n="page.col.dist">距離</th></tr>
+            <tr role="row"><th role="columnheader" class="utc">UTC</th><th role="columnheader" class="seq">S.</th><th role="columnheader" class="num snr">dB</th><th role="columnheader" class="num dt">Δt</th><th role="columnheader" class="num hz" data-i18n="page.col.hz">頻率</th><th role="columnheader" class="msg"><span data-i18n="page.col.msg">訊息</span><span class="colhead-n"></span></th><th role="columnheader" class="num dist" data-i18n="page.col.dist">距離</th><th role="columnheader" class="from" data-i18n="page.col.from">發話方</th><th role="columnheader" class="to" data-i18n="page.col.to">接收方</th></tr>
           </thead>
           <tbody id="decodes" role="rowgroup"></tbody>
         </table>
@@ -1214,7 +1214,7 @@
       <div id="call-list-classic" class="table-wrap cards-wrap">
         <table role="table" aria-label="呼叫清單" data-i18n-attr="aria-label:page.call.title">
           <thead role="rowgroup">
-            <tr role="row"><th role="columnheader" class="seq">S.</th><th role="columnheader" class="num snr">dB</th><th role="columnheader" class="num dt">Δt</th><th role="columnheader" class="num hz" data-i18n="page.col.hz">頻率</th><th role="columnheader" class="msg"><span data-i18n="page.col.msg">訊息</span><span class="colhead-n"></span></th><th role="columnheader" class="band" data-i18n="page.col.dial">撥號頻率</th><th role="columnheader" class="utc">UTC</th><th role="columnheader" class="from" data-i18n="page.col.from">發話方</th><th role="columnheader" class="to" data-i18n="page.col.to">接收方</th><th role="columnheader" class="num dist" data-i18n="page.col.dist">距離</th></tr>
+            <tr role="row"><th role="columnheader" class="utc">UTC</th><th role="columnheader" class="seq">S.</th><th role="columnheader" class="num snr">dB</th><th role="columnheader" class="num dt">Δt</th><th role="columnheader" class="num hz" data-i18n="page.col.hz">頻率</th><th role="columnheader" class="msg"><span data-i18n="page.col.msg">訊息</span><span class="colhead-n"></span></th><th role="columnheader" class="num dist" data-i18n="page.col.dist">距離</th><th role="columnheader" class="from" data-i18n="page.col.from">發話方</th><th role="columnheader" class="to" data-i18n="page.col.to">接收方</th></tr>
           </thead>
           <tbody id="call-list" role="rowgroup"></tbody>
         </table>
