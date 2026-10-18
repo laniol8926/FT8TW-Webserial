@@ -40,15 +40,12 @@ function marksEl(marks) {
   return span;
 }
 
-// dB 欄：數字＋強度格（SignalBarsView：低到高遞增，亮格主題色、暗格邊框色）
+// dB 欄：只顯示數字（強度格已拿掉，使用者需求）
 function snrCell(m) {
   const td = el('td', 'num snr');
   if (m.own) return td;
-  const bars = el('span', 'sig-bars');
-  bars.setAttribute('aria-hidden', 'true');
-  for (let i = 1; i <= 5; i++) bars.append(el('i', i <= m.bars ? 'on' : ''));
-  td.append(bars, el('span', 'snr-num', m.snr));
-  td.setAttribute('aria-label', t('cards.snrAria', { snr: m.snr, bars: m.bars }));
+  td.append(el('span', 'snr-num', m.snr));
+  td.setAttribute('aria-label', t('cards.snrAria', { snr: m.snr }));
   return td;
 }
 

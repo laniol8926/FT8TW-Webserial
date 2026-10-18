@@ -8,7 +8,6 @@
 import { callsignFrom, callsignTo, isCq, isMyCallsign, parseFt8Text } from '../qso/messages.mjs';
 import { checkMaidenhead, gridDistanceKm } from '../country/geo.mjs';
 import { SLOT_MS } from '../slot.mjs';
-import { signalBars } from '../station/signal.mjs';
 import { countryName } from '../country/db.mjs';
 import { formatUtc, formatUtcTenths } from '../format.mjs';
 import { t } from '../i18n/index.mjs';
@@ -121,7 +120,6 @@ export function cardModel(row, ctx) {
     seq: sequence4(row.startUtc, row.mode) % 2,
     seq4: sequence4(row.startUtc, row.mode),
     snr: row.own ? '' : String(row.snr),
-    bars: row.own ? 0 : signalBars(row.snr), // dB 欄旁的強度格（同電台卡，使用者 2026-10-06）
     dt: row.own || stream ? '' : dt.toFixed(1),
     dtBold: !row.own && !stream && (dt > 1.0 || dt < -0.05),
     hz: row.own ? 'TX' : pad4(row.freqHz),

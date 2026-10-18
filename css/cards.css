@@ -50,15 +50,6 @@
 .cards-wrap td.seq { grid-area: seq; }
 .cards-wrap td.snr { grid-area: snr; text-align: right; }
 .cards-wrap td.snr { white-space: nowrap; }
-/* dB 欄的強度格（SignalBarsView）：低到高遞增，亮格主題色、暗格邊框色 */
-.sig-bars { display: inline-flex; align-items: flex-end; gap: 1px; height: 0.9em; margin-right: 3px; vertical-align: baseline; }
-.sig-bars i { width: 3px; background: var(--border); border-radius: 1px; }
-.sig-bars i:nth-child(1) { height: 30%; }
-.sig-bars i:nth-child(2) { height: 45%; }
-.sig-bars i:nth-child(3) { height: 60%; }
-.sig-bars i:nth-child(4) { height: 80%; }
-.sig-bars i:nth-child(5) { height: 100%; }
-.sig-bars i.on { background: var(--accent); }
 .snr-num { display: inline-block; min-width: 1.8em; text-align: right; }
 .cards-wrap td.dt { grid-area: dt; text-align: right; }
 .cards-wrap td.dt.bold { font-weight: bold; }

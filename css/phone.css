@@ -142,7 +142,6 @@
   .cards-wrap td.from { justify-content: flex-end; padding-right: 2px; }
   .cards-wrap td.from .marks { order: 2; margin: 0 0 0 2px; }
   .cards-wrap :is(td.from, td.to) .cty { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-  .cards-wrap .sig-bars { display: none; } /* App 的 dB 欄只有數字 */
   .cards-wrap .snr-num { min-width: 0; }
   .cards-wrap .mk { font-size: 0.95em; min-width: 1.15em; }
   .cards-wrap .marks { margin: 0 2px 0 0; }
