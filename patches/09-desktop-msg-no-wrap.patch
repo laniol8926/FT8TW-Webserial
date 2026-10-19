@@ -1,0 +1,11 @@
+--- a/css/cards.css	2026-10-18 15:51:51.210837967 +0000
++++ b/css/cards.css	2026-10-18 15:51:57.490806833 +0000
+@@ -54,7 +54,7 @@
+ .cards-wrap td.dt { grid-area: dt; text-align: right; }
+ .cards-wrap td.dt.bold { font-weight: bold; }
+ .cards-wrap td.hz { grid-area: hz; text-align: right; }
+-.cards-wrap td.msg { grid-area: msg; white-space: normal; overflow-wrap: break-word; font-size: 1.05em; width: auto; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
++.cards-wrap td.msg { grid-area: msg; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 1.05em; width: auto; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+ .cards-wrap td.utc { grid-area: utc; font-size: 0.85em; }
+ .cards-wrap td.from { grid-area: from; font-size: 0.85em; overflow: hidden; text-overflow: ellipsis; }
+ .cards-wrap td.to { grid-area: to; font-size: 0.85em; overflow: hidden; text-overflow: ellipsis; }

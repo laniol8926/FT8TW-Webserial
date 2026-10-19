@@ -1,0 +1,202 @@
+--- a/index.html	2026-10-18 14:25:59.272343674 +0000
++++ b/index.html	2026-10-18 14:26:12.552242108 +0000
+@@ -1192,7 +1192,7 @@
+         <!-- 明確的 role：手機版把列改成 grid 卡片後，瀏覽器會丟掉表格語意，報讀軟體就讀不到欄名 -->
+         <table role="table">
+           <thead role="rowgroup">
+-            <tr role="row"><th role="columnheader" class="seq">S.</th><th role="columnheader" class="num snr">dB</th><th role="columnheader" class="num dt">Δt</th><th role="columnheader" class="num hz" data-i18n="page.col.hz">頻率</th><th role="columnheader" class="msg"><span data-i18n="page.col.msg">訊息</span><span class="colhead-n"></span></th><th role="columnheader" class="band" data-i18n="page.col.dial">撥號頻率</th><th role="columnheader" class="utc">UTC</th><th role="columnheader" class="from" data-i18n="page.col.from">發話方</th><th role="columnheader" class="to" data-i18n="page.col.to">接收方</th><th role="columnheader" class="num dist" data-i18n="page.col.dist">距離</th></tr>
++            <tr role="row"><th role="columnheader" class="utc">UTC</th><th role="columnheader" class="seq">S.</th><th role="columnheader" class="num snr">dB</th><th role="columnheader" class="num dt">Δt</th><th role="columnheader" class="num hz" data-i18n="page.col.hz">頻率</th><th role="columnheader" class="msg"><span data-i18n="page.col.msg">訊息</span><span class="colhead-n"></span></th><th role="columnheader" class="num dist" data-i18n="page.col.dist">距離</th><th role="columnheader" class="from" data-i18n="page.col.from">發話方</th><th role="columnheader" class="to" data-i18n="page.col.to">接收方</th></tr>
+           </thead>
+           <tbody id="decodes" role="rowgroup"></tbody>
+         </table>
+@@ -1207,7 +1207,7 @@
+       <div id="call-list-classic" class="table-wrap cards-wrap">
+         <table role="table" aria-label="呼叫清單" data-i18n-attr="aria-label:page.call.title">
+           <thead role="rowgroup">
+-            <tr role="row"><th role="columnheader" class="seq">S.</th><th role="columnheader" class="num snr">dB</th><th role="columnheader" class="num dt">Δt</th><th role="columnheader" class="num hz" data-i18n="page.col.hz">頻率</th><th role="columnheader" class="msg"><span data-i18n="page.col.msg">訊息</span><span class="colhead-n"></span></th><th role="columnheader" class="band" data-i18n="page.col.dial">撥號頻率</th><th role="columnheader" class="utc">UTC</th><th role="columnheader" class="from" data-i18n="page.col.from">發話方</th><th role="columnheader" class="to" data-i18n="page.col.to">接收方</th><th role="columnheader" class="num dist" data-i18n="page.col.dist">距離</th></tr>
++            <tr role="row"><th role="columnheader" class="utc">UTC</th><th role="columnheader" class="seq">S.</th><th role="columnheader" class="num snr">dB</th><th role="columnheader" class="num dt">Δt</th><th role="columnheader" class="num hz" data-i18n="page.col.hz">頻率</th><th role="columnheader" class="msg"><span data-i18n="page.col.msg">訊息</span><span class="colhead-n"></span></th><th role="columnheader" class="num dist" data-i18n="page.col.dist">距離</th><th role="columnheader" class="from" data-i18n="page.col.from">發話方</th><th role="columnheader" class="to" data-i18n="page.col.to">接收方</th></tr>
+           </thead>
+           <tbody id="call-list" role="rowgroup"></tbody>
+         </table>
+--- a/css/cards.css	2026-10-18 14:25:59.308343399 +0000
++++ b/css/cards.css	2026-10-18 14:27:07.051841406 +0000
+@@ -1,7 +1,6 @@
+-/* ── 解碼卡片（add-web-transmit 3.2、D16，仿 FT8TW CallingListAdapter／call_list_holder_item）──
+-   每則一張圓角卡片：第一行 S. dB Δt Hz 訊息 撥號頻率、第二行 UTC [D I C]發話方國名 接收方國名[D I C] 距離。
++/* ── 解碼清單（add-web-transmit 3.2、D16，仿 FT8TW CallingListAdapter／call_list_holder_item）──
++   一列一行：UTC S. dB Δt Hz 訊息 距離 [D I C]發話方國名 接收方國名[D I C]（無邊框，撥號頻率已拿掉，見使用者需求）。
+    底色（淺色）：叫我洋紅＋★、關注黃、CQ 綠、已 QSL 台的 CQ 淺綠、與我相關芥末、其他白；深色主題只換訊息字色（同 FT8TW）。
+-   外框依一分鐘內的四個時序：0 淺灰細、1 深灰粗、2 中灰細、3 深灰粗（深色改底色深淺）。容器夠寬（≥760px）時排成一行的寬卡。
+    另檔放（不寫進 app.css）：主線同時在改 app.css 的版面。 */
+ :root {
+   --c-me: #FF6EC7; --c-me-dark: #FF8AD8; --c-star: #FFFF33;
+@@ -36,15 +35,15 @@
+ .cards-wrap thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+ .cards-wrap tr.card {
+   display: grid;
+-  grid-template-columns: auto auto auto auto minmax(0, 1fr) minmax(0, 1fr) auto;
+-  grid-template-areas: "seq snr dt hz msg msg band" "utc utc utc utc from to dist";
++  grid-template-columns: 4.2em 1em 4.2em 2.4em 2.8em minmax(10em, 2fr) 4.4em minmax(4em, 1fr) minmax(4em, 1fr);
++  grid-template-areas: "utc seq snr dt hz msg dist from to";
+   column-gap: 8px; align-items: baseline;
+   margin: 0 var(--side-gap) 4px 0; padding: 3px 10px; border-radius: 10px;
+-  color: var(--card-ink); background: var(--q0bg); border: var(--q0w) solid var(--q0);
++  color: var(--card-ink); background: var(--q0bg); border: 0;
+ }
+-.cards-wrap tr.card.q1 { background: var(--q1bg); border: var(--q1w) solid var(--q1); }
+-.cards-wrap tr.card.q2 { background: var(--q2bg); border: var(--q2w) solid var(--q2); }
+-.cards-wrap tr.card.q3 { background: var(--q3bg); border: var(--q3w) solid var(--q3); }
++.cards-wrap tr.card.q1 { background: var(--q1bg); }
++.cards-wrap tr.card.q2 { background: var(--q2bg); }
++.cards-wrap tr.card.q3 { background: var(--q3bg); }
+ .cards-wrap tr.card :where(td) { padding: 0; border: 0; background: transparent; min-width: 0; white-space: nowrap; }
+ .cards-wrap td.dt { font-weight: normal; }
+ .cards-wrap tr.card.slot-start td { border-top: 0; }
+@@ -64,8 +63,7 @@
+ .cards-wrap td.dt { grid-area: dt; text-align: right; }
+ .cards-wrap td.dt.bold { font-weight: bold; }
+ .cards-wrap td.hz { grid-area: hz; text-align: right; }
+-.cards-wrap td.msg { grid-area: msg; white-space: normal; overflow-wrap: break-word; font-size: 1.1em; width: auto; font-family: inherit; }
+-.cards-wrap td.band { grid-area: band; text-align: right; font-size: 0.8em; }
++.cards-wrap td.msg { grid-area: msg; white-space: normal; overflow-wrap: break-word; font-size: 1.05em; width: auto; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+ .cards-wrap td.utc { grid-area: utc; font-size: 0.85em; }
+ .cards-wrap td.from { grid-area: from; font-size: 0.85em; white-space: normal; }
+ .cards-wrap td.to { grid-area: to; font-size: 0.85em; white-space: normal; }
+@@ -111,26 +109,11 @@
+ .cards-wrap tr.card.selected { outline: 3px solid var(--accent); outline-offset: 1px; }
+ #decodes tr.card.selected td, #call-list tr.card.selected td { background: transparent; }
+ 
+-/* 手機窄卡：訊息吃滿第一行（撥號頻率每則都一樣，窄到放不下時省略，留給訊息） */
++/* 窄容器：欄位間距、留白縮小，仍維持一行（使用者需求：一律一行列表，不再切回兩行卡片） */
+ @container (max-width: 479px) {
+-  .cards-wrap tr.card { grid-template-areas: "seq snr dt hz msg msg band" "utc utc utc utc from to dist"; }
+-  .cards-wrap td.band { display: none; }
+-  .cards-wrap td.msg { grid-column: 5 / -1; font-size: 1.02em; }
+   .cards-wrap tr.card { column-gap: 6px; padding: 3px 8px; }
+ }
+ 
+-/* 容器夠寬：一則一行的寬卡 */
+-@container (min-width: 820px) {
+-  .cards-wrap tr.card {
+-    grid-template-columns: 1em 4.2em 2.4em 2.8em minmax(10em, 2fr) minmax(4em, 1fr) minmax(4em, 1fr) 4.4em 5.6em 4.2em;
+-    column-gap: 6px;
+-    grid-template-areas: "seq snr dt hz msg from to dist band utc";
+-    padding: 2px 10px; margin-bottom: 3px;
+-  }
+-  .cards-wrap td.msg { font-size: 1.05em; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+-  .cards-wrap td.utc { text-align: right; }
+-}
+-
+ /* ── 呼叫清單（呼叫頁中段）── */
+ .call-list .seg, .list-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; }
+ /* 藏起來的列（其他模式、不符篩選）：tr.card 的 display: grid 會蓋過 [hidden]，要明確藏（使用者 2026-10-09） */
+--- a/css/phone.css	2026-10-18 14:25:59.308343399 +0000
++++ b/css/phone.css	2026-10-18 14:27:32.171658889 +0000
+@@ -98,7 +98,7 @@
+   .pbar-rig .rm-swr.rm-high { background: #c62828; color: #fff; }
+   .pbar-r2 { text-align: right; } /* UTC 一律靠右，不靠 :has()（舊瀏覽器，review C4） */
+ 
+-  /* ── 欄名列「S. dB Δt 頻率 訊息(n/總數) 距離」：固定在清單上方，欄位與卡片對齊 ── */
++  /* ── 欄名列「UTC S. dB Δt 頻率 訊息(n/總數) 距離」：固定在清單上方，欄位與卡片對齊 ── */
+   #decodes-panel .cards-wrap thead, #call-list-panel .cards-wrap thead {
+     position: sticky; top: 0; z-index: 3; display: block; width: auto; height: auto; overflow: visible; clip-path: none; white-space: nowrap;
+     background: var(--p-page); padding: 1px 1px 2px;
+@@ -108,30 +108,30 @@
+     padding: 1px 6px; border: 1px solid var(--p-head-border); border-radius: 6px; font-size: 12px; line-height: 1.5;
+   }
+   .cards-wrap thead th { padding: 0; border: 0; color: var(--text); font-weight: normal; background: transparent; position: static; }
+-  .cards-wrap thead th.seq { grid-column: 1; }
+-  .cards-wrap thead th.snr { grid-column: 2; text-align: right; }
+-  .cards-wrap thead th.dt { grid-column: 3; text-align: right; }
+-  .cards-wrap thead th.hz { grid-column: 4; text-align: right; }
+-  .cards-wrap thead th.msg { grid-column: 5 / 7; text-align: center; }
++  .cards-wrap thead th.utc { grid-column: 1; }
++  .cards-wrap thead th.seq { grid-column: 2; }
++  .cards-wrap thead th.snr { grid-column: 3; text-align: right; }
++  .cards-wrap thead th.dt { grid-column: 4; text-align: right; }
++  .cards-wrap thead th.hz { grid-column: 5; text-align: right; }
++  .cards-wrap thead th.msg { grid-column: 6; text-align: center; }
+   .cards-wrap thead th.dist { grid-column: 7; text-align: right; }
+-  .cards-wrap thead th:is(.band, .utc, .from, .to) { display: none; }
++  .cards-wrap thead th:is(.from, .to) { display: none; }
+   .colhead-n { display: inline; }
+ 
+-  /* ── 解碼列（App call_list_holder_item）：兩行固定不折行，訊息太長截斷；圓角 12、框 1px；
++  /* ── 解碼列（App call_list_holder_item）：一行固定不折行，訊息太長截斷；圓角 12、無邊框；
+      字級 13／12／10／9px（＝設置的列表字型 16px 時；同 App 的字級偏移，跟著設置加減） ── */
+-  .cards-wrap { --p-cols: 0.75em 1.9em 2.15em 2.45em minmax(0, 1fr) minmax(0, 1fr) auto; --side-gap: 16px; }
++  .cards-wrap { --p-cols: 2.6em 0.75em 1.9em 2.15em 2.45em minmax(0, 1fr) 2.6em minmax(3em, 1fr) minmax(3em, 1fr); --side-gap: 16px; }
+   #decodes-panel .cards-wrap tr.card, #call-list-panel .cards-wrap tr.card {
+-    grid-template-columns: var(--p-cols); grid-template-areas: "seq snr dt hz msg msg band" "utc utc utc utc to from dist"; /* 第 2 行同 App：[DIC]接收方國名　發話方國名[DIC] */
+-    column-gap: 4px; row-gap: 0; padding: 1px 6px 2px; margin: 0 var(--side-gap) 2px 1px; border-radius: 12px; border-width: 1px;
++    grid-template-columns: var(--p-cols); grid-template-areas: "utc seq snr dt hz msg dist from to";
++    column-gap: 4px; row-gap: 0; padding: 1px 6px 2px; margin: 0 var(--side-gap) 2px 1px; border-radius: 12px; border: 0;
+     font-size: max(7px, calc(var(--feed-font) - 4px)); line-height: 1.3; align-items: baseline;
+   }
+   #decodes-panel .cards-wrap tr.card.mine, #call-list-panel .cards-wrap tr.card.mine { margin: 0 1px 2px var(--side-gap); }
+   .cards-wrap tr.card td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+   #decodes-panel .cards-wrap td.msg, #call-list-panel .cards-wrap td.msg {
+-    grid-column: 5 / 7; white-space: nowrap; overflow-wrap: normal; font-size: calc(var(--feed-font) - 3px);
++    white-space: nowrap; overflow-wrap: normal; font-size: calc(var(--feed-font) - 3px);
+     font-family: inherit; padding-left: 2px;
+   }
+-  #decodes-panel .cards-wrap td.band, #call-list-panel .cards-wrap td.band { display: block; font-size: max(7px, calc(var(--feed-font) - 7px)); align-self: center; }
+   #decodes-panel .cards-wrap :is(td.utc, td.from, td.to), #call-list-panel .cards-wrap :is(td.utc, td.from, td.to) {
+     font-size: max(7px, calc(var(--feed-font) - 6px)); white-space: nowrap;
+   }
+--- a/js/cards/rules.mjs	2026-10-18 14:25:59.292343522 +0000
++++ b/js/cards/rules.mjs	2026-10-18 14:26:40.164036768 +0000
+@@ -10,7 +10,6 @@
+ import { SLOT_MS } from '../slot.mjs';
+ import { signalBars } from '../station/signal.mjs';
+ import { countryName } from '../country/db.mjs';
+-import { formatMHz } from '../freqlist.mjs';
+ import { formatUtc, formatUtcTenths } from '../format.mjs';
+ import { t } from '../i18n/index.mjs';
+ 
+@@ -98,11 +97,6 @@
+   return mode ? rows.filter((r) => r.mode === mode) : rows;
+ }
+ 
+-// 撥號頻率文字（BaseRigOperation.getFrequencyStr）：14.074MHz
+-export function dialText(dialHz) {
+-  return Number.isFinite(dialHz) && dialHz > 0 ? `${formatMHz(dialHz)}MHz` : ''; // 7.0475 不四捨五入（code review 2026-10-09）
+-}
+-
+ // 一則解碼的卡片內容。row：{ text, snr, freqHz, timeSec, startUtc, mode, own? }（own＝我方發射）
+ // ctx：{ myCall, myGrid, follow: Set, worked, lookup(call), gridOf(call), dialHz }
+ export function cardModel(row, ctx) {
+@@ -150,7 +144,6 @@
+     toMarks: row.own ? null : zoneMarks(toInfo, worked),
+     km,
+     grid,
+-    band: dialText(row.dialHz ?? ctx.dialHz), // 收到當時的撥號頻率；舊資料沒有才用目前的（Codex 2026-10-09）
+   };
+ }
+ 
+--- a/js/cards/ui.mjs	2026-10-18 14:25:59.292343522 +0000
++++ b/js/cards/ui.mjs	2026-10-18 14:26:25.284144883 +0000
+@@ -52,7 +52,9 @@
+   return td;
+ }
+ 
+-// 把一列填成卡片：欄位順序＝thead 的欄名（S. dB Δt Hz 訊息 頻率 UTC 發話方 接收方 距離）
++// 把一列填成卡片：欄位順序＝thead 的欄名（UTC S. dB Δt Hz 訊息 距離 發話方 接收方）
++// 撥號頻率欄已拿掉：畫面上方已經常駐顯示目前波段／頻率，每列再重複一次是多餘的（使用者需求）
++// UTC 移到最前、距離搬到原撥號頻率的位置（使用者需求）
+ export function fillCard(tr, m, startUtc) {
+   const keep = tr.classList.contains('slot-start') ? 'slot-start ' : '';
+   const sel = tr.classList.contains('selected') ? ' selected' : '';
+@@ -67,9 +69,9 @@
+   const to = el('td', 'to');
+   to.append(flagImg(m.toFlag), el('span', 'cty', m.toCountry), marksEl(m.toMarks));
+   const cells = [
+-    el('td', 'seq', String(m.seq)), snrCell(m), el('td', `num dt${m.dtBold ? ' bold' : ''}`, m.dt),
+-    el('td', 'num hz', m.hz), msg, el('td', 'band', m.band), el('td', 'utc', m.utcText ?? formatUtc(startUtc)), from, to,
+-    el('td', 'num dist', m.km === null ? '' : `${m.km} km`),
++    el('td', 'utc', m.utcText ?? formatUtc(startUtc)), el('td', 'seq', String(m.seq)), snrCell(m),
++    el('td', `num dt${m.dtBold ? ' bold' : ''}`, m.dt), el('td', 'num hz', m.hz), msg,
++    el('td', 'num dist', m.km === null ? '' : `${m.km} km`), from, to,
+   ];
+   for (const td of cells) td.setAttribute('role', 'cell');
+   tr.replaceChildren(...cells);

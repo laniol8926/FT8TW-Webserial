@@ -1,0 +1,69 @@
+--- a/index.html	2026-10-18 15:38:55.226684998 +0000
++++ b/index.html	2026-10-18 15:39:19.546564430 +0000
+@@ -1192,7 +1192,7 @@
+         <!-- 明確的 role：手機版把列改成 grid 卡片後，瀏覽器會丟掉表格語意，報讀軟體就讀不到欄名 -->
+         <table role="table">
+           <thead role="rowgroup">
+-            <tr role="row"><th role="columnheader" class="utc">UTC</th><th role="columnheader" class="seq">S.</th><th role="columnheader" class="num snr">dB</th><th role="columnheader" class="num dt">Δt</th><th role="columnheader" class="num hz" data-i18n="page.col.hz">頻率</th><th role="columnheader" class="msg"><span data-i18n="page.col.msg">訊息</span><span class="colhead-n"></span></th><th role="columnheader" class="num dist" data-i18n="page.col.dist">距離</th><th role="columnheader" class="from" data-i18n="page.col.from">發話方</th><th role="columnheader" class="to" data-i18n="page.col.to">接收方</th></tr>
++            <tr role="row"><th role="columnheader" class="utc">UTC</th><th role="columnheader" class="seq">S.</th><th role="columnheader" class="num snr">dB</th><th role="columnheader" class="num dt">Δt</th><th role="columnheader" class="num hz" data-i18n="page.col.hz">頻率</th><th role="columnheader" class="msg"><span data-i18n="page.col.msg">訊息</span><span class="colhead-n"></span></th><th role="columnheader" class="from" data-i18n="page.col.from">發話方</th><th role="columnheader" class="to" data-i18n="page.col.to">接收方</th><th role="columnheader" class="num dist" data-i18n="page.col.dist">距離</th></tr>
+           </thead>
+           <tbody id="decodes" role="rowgroup"></tbody>
+         </table>
+@@ -1207,7 +1207,7 @@
+       <div id="call-list-classic" class="table-wrap cards-wrap">
+         <table role="table" aria-label="呼叫清單" data-i18n-attr="aria-label:page.call.title">
+           <thead role="rowgroup">
+-            <tr role="row"><th role="columnheader" class="utc">UTC</th><th role="columnheader" class="seq">S.</th><th role="columnheader" class="num snr">dB</th><th role="columnheader" class="num dt">Δt</th><th role="columnheader" class="num hz" data-i18n="page.col.hz">頻率</th><th role="columnheader" class="msg"><span data-i18n="page.col.msg">訊息</span><span class="colhead-n"></span></th><th role="columnheader" class="num dist" data-i18n="page.col.dist">距離</th><th role="columnheader" class="from" data-i18n="page.col.from">發話方</th><th role="columnheader" class="to" data-i18n="page.col.to">接收方</th></tr>
++            <tr role="row"><th role="columnheader" class="utc">UTC</th><th role="columnheader" class="seq">S.</th><th role="columnheader" class="num snr">dB</th><th role="columnheader" class="num dt">Δt</th><th role="columnheader" class="num hz" data-i18n="page.col.hz">頻率</th><th role="columnheader" class="msg"><span data-i18n="page.col.msg">訊息</span><span class="colhead-n"></span></th><th role="columnheader" class="from" data-i18n="page.col.from">發話方</th><th role="columnheader" class="to" data-i18n="page.col.to">接收方</th><th role="columnheader" class="num dist" data-i18n="page.col.dist">距離</th></tr>
+           </thead>
+           <tbody id="call-list" role="rowgroup"></tbody>
+         </table>
+--- a/css/cards.css	2026-10-18 15:38:55.226684998 +0000
++++ b/css/cards.css	2026-10-18 15:39:11.270605459 +0000
+@@ -35,8 +35,8 @@
+ .cards-wrap thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+ .cards-wrap tr.card {
+   display: grid;
+-  grid-template-columns: 4.2em 1em 2.2em 2.2em 2.3em minmax(10em, 2fr) 4.4em minmax(3em, 1fr) minmax(3em, 1fr);
+-  grid-template-areas: "utc seq snr dt hz msg dist from to";
++  grid-template-columns: 4.2em 1em 2.2em 2.2em 2.3em minmax(7em, 2fr) minmax(2.5em, 1fr) minmax(2.5em, 1fr) 4.4em;
++  grid-template-areas: "utc seq snr dt hz msg from to dist";
+   column-gap: 8px; align-items: baseline;
+   margin: 0 var(--side-gap) 4px 0; padding: 3px 10px; border-radius: 10px;
+   color: var(--card-ink); background: var(--q0bg); border: 0;
+--- a/css/phone.css	2026-10-18 15:38:55.226684998 +0000
++++ b/css/phone.css	2026-10-18 15:39:37.774474063 +0000
+@@ -120,7 +120,7 @@
+ 
+   /* ── 解碼列（App call_list_holder_item）：一行固定不折行，訊息太長截斷；圓角 12、無邊框；
+      字級 13／12／10／9px（＝設置的列表字型 16px 時；同 App 的字級偏移，跟著設置加減） ── */
+-  .cards-wrap { --p-cols: 4.2em 0.75em 1.9em 2.15em 2.45em minmax(0, 1fr) minmax(3em, 1fr) minmax(3em, 1fr) 4.4em; --side-gap: 16px; }
++  .cards-wrap { --p-cols: 4.2em 0.75em 1.9em 2.15em 2.45em minmax(6em, 1fr) minmax(2em, 1fr) minmax(2em, 1fr) 4.4em; --side-gap: 16px; }
+   #decodes-panel .cards-wrap tr.card, #call-list-panel .cards-wrap tr.card {
+     grid-template-columns: var(--p-cols); grid-template-areas: "utc seq snr dt hz msg from to dist";
+     column-gap: 4px; row-gap: 0; padding: 1px 6px 2px; margin: 0 var(--side-gap) 2px 1px; border-radius: 12px; border: 0;
+--- a/js/cards/ui.mjs	2026-10-18 15:38:55.210685078 +0000
++++ b/js/cards/ui.mjs	2026-10-18 15:39:32.082502281 +0000
+@@ -49,9 +49,9 @@
+   return td;
+ }
+ 
+-// 把一列填成卡片：欄位順序＝thead 的欄名（UTC S. dB Δt Hz 訊息 距離 發話方 接收方）
++// 把一列填成卡片：欄位順序＝thead 的欄名（UTC S. dB Δt Hz 訊息 發話方 接收方 距離）
+ // 撥號頻率欄已拿掉：畫面上方已經常駐顯示目前波段／頻率，每列再重複一次是多餘的（使用者需求）
+-// UTC 移到最前、距離搬到原撥號頻率的位置（使用者需求）
++// UTC 移到最前；距離移到最後貼齊右邊，與手機版一致（使用者需求）
+ export function fillCard(tr, m, startUtc) {
+   const keep = tr.classList.contains('slot-start') ? 'slot-start ' : '';
+   const sel = tr.classList.contains('selected') ? ' selected' : '';
+@@ -67,8 +67,8 @@
+   to.append(flagImg(m.toFlag), el('span', 'cty', m.toCountry), marksEl(m.toMarks));
+   const cells = [
+     el('td', 'utc', m.utcText ?? formatUtc(startUtc)), el('td', 'seq', String(m.seq)), snrCell(m),
+-    el('td', `num dt${m.dtBold ? ' bold' : ''}`, m.dt), el('td', 'num hz', m.hz), msg,
+-    el('td', 'num dist', m.km === null ? '' : `${m.km} km`), from, to,
++    el('td', `num dt${m.dtBold ? ' bold' : ''}`, m.dt), el('td', 'num hz', m.hz), msg, from, to,
++    el('td', 'num dist', m.km === null ? '' : `${m.km} km`),
+   ];
+   for (const td of cells) td.setAttribute('role', 'cell');
+   tr.replaceChildren(...cells);

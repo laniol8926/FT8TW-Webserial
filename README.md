@@ -16,6 +16,10 @@ Hi Dan — per our earlier conversation, here's the fork so you can see exactly 
 
 Each commit applies cleanly in sequence (`git log --oneline` to see them all); happy to answer questions about any of them or adjust anything that doesn't fit how you'd want it done in your own source tree.
 
+## `patches/`
+
+The same 12 changes, also as raw unified diffs (`01-...patch` through `12-...patch`, same order as the commits). If it's easier to pull one directly into your own source tree rather than reading it off a commit, these apply with `patch -p1 < patches/NN-name.patch` or `git apply patches/NN-name.patch` (run from the relevant directory in your tree — paths inside are relative to the app root, e.g. `js/cards/ui.mjs`, `css/cards.css`). They're generated from, and kept in sync with, the same local mirror this repo is built from.
+
 ## How this mirror works
 
 Not part of the actual changes, just FYI: this repo is generated from a local self-hosting setup (`crawl.py`, a custom ES-module-graph crawler, since plain `wget --mirror` can't see `.mjs` `import` statements or the `new URL(..., import.meta.url)` calls the WASM loaders use). The decode-table changes above are applied as patches on top of a fresh crawl every time it re-syncs with your live site, so local changes survive you shipping new features upstream.

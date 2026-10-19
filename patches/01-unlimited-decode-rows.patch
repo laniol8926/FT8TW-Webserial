@@ -1,0 +1,18 @@
+--- a/js/main.mjs
++++ b/js/main.mjs
+@@ -75,7 +75,6 @@
+ import { formatUtcTenths } from './format.mjs';
+ import { txAudioMaxHz, clampTxAudioHz } from './tx/guard.mjs';
+ 
+-const MAX_ROWS = 500;
+ const JTTY_CHANNEL_HZ = 127; // JTTY 佔用頻寬（add-web-jtty D12：瀑布圖從 #tx-freq 起畫 127 Hz）
+ const $ = (id) => document.getElementById(id);
+ applyDom(); // 多語系：把 data-i18n 換成目前語系（其他程式之後寫入的文字由各自用 t() 產生）
+@@ -427,7 +426,6 @@
+   const head = [...tbody.rows].slice(0, 40);
+   const at = feedInsertIndex(head.map((tr) => rowData.get(tr)?.startUtc ?? Infinity), msg.startUtc);
+   tbody.insertBefore(frag, head[at] ?? (at < head.length ? null : head.at(-1)?.nextSibling ?? null));
+-  while (tbody.rows.length > MAX_ROWS) tbody.deleteRow(-1);
+   updateDecodeCount();
+ }
+ 
