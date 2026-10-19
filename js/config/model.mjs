@@ -98,6 +98,10 @@ const FIELDS = {
   autoFollowCQOrder: oneOf(0, [0, 1, 2, 3, 4, 5, 6]), // 回應 CQ 方案，標籤見 qso/autofollow.mjs SCHEME_LABELS
   qsoFilterOpt: oneOf(4, QSO_FILTER_OPTIONS.map(([v]) => v)),
   showWorkedStations: bool(true),
+  // Control 分頁「隱藏已通聯站台」（使用者 2026-10-19）：跟 showWorkedStations 分開，各管各的——
+  // showWorkedStations 只影響 Stations 分頁的站台清單與分區新舊標記，不碰解碼清單；這個只管
+  // 解碼清單要不要把已通聯過的列直接拿掉（不是加刪除線，是真的不顯示）。
+  hideWorkedDecodes: bool(false),
   followCallsigns: list(),
   excludedCallsigns: list(), // 排除的呼號前綴
   launchSupervisionMin: oneOf(15, SUPERVISION_OPTIONS),

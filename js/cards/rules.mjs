@@ -5,11 +5,16 @@
 // 網頁沒有 Ft8Message 的 i3／n3，以 qso/messages.mjs 的 parseFt8Text 判斷（認不出＝自由文字／遙測）。
 // 「已通聯」直接查 QSO 記錄的呼號集合（FT8TW checkQSLCallsign），不做 FT8TW 的加入當下快照（workedWhenAdded）：
 // 網頁每次重畫都即時查，目前呼叫的對象另外豁免，效果與快照＋規則 2 相同。
+// 刪除線（cardModel 的 strike）另外分波段／模式（使用者 2026-10-19）：同一個呼號在沒通聯過的
+// 頻段或模式上還是算新的——鍵的格式跟 reporter.mjs 回報去重的「呼號｜波段｜模式」一樣（D14）。
+// 注意這跟 hiddenAsWorked（WorkedStationFilter，下面）是兩回事，那個仍然整支呼號查，不分波段
+// 模式——維持 Android 版 checkQSLCallsign 原本的行為，只有刪除線這裡改。
 import { callsignFrom, callsignTo, isCq, isMyCallsign, parseFt8Text } from '../qso/messages.mjs';
 import { checkMaidenhead, gridDistanceKm } from '../country/geo.mjs';
 import { SLOT_MS } from '../slot.mjs';
 import { countryName } from '../country/db.mjs';
 import { formatUtc, formatUtcTenths } from '../format.mjs';
+import { bandOf } from '../bands.mjs';
 import { t } from '../i18n/index.mjs';
 
 const OTA = /^CQ\s+(SOTA|POTA|OTA)\b/;
@@ -70,15 +75,21 @@ export function zoneMarks(info, worked) {
   };
 }
 
-export const EMPTY_WORKED = Object.freeze({ calls: new Set(), dxcc: new Set(), itu: new Set(), cq: new Set() });
+export const EMPTY_WORKED = Object.freeze({ calls: new Set(), byBandMode: new Set(), dxcc: new Set(), itu: new Set(), cq: new Set() });
+
+// 「呼號｜波段｜模式」鍵，band／mode 缺的話用 '?'（分開計，不會跟真的波段/模式混在一起）
+export const workedKey = (call, band, mode) => `${call}|${band ?? '?'}|${mode ?? '?'}`;
 
 // QSO 記錄 → 已通聯的呼號、DXCC、ITU 區、CQ 區（GeneralVariables 的 QSL_Callsign_list、dxccMap、ituMap、cqMap）
+// calls：整支呼號（給 hiddenAsWorked／Stations 分頁用，不分波段模式）
+// byBandMode：呼號＋波段＋模式（給 cardModel 的刪除線用，同一呼號換頻段/模式要算新的）
 export function workedSets(qsos, lookup = () => null) {
-  const w = { calls: new Set(), dxcc: new Set(), itu: new Set(), cq: new Set() };
+  const w = { calls: new Set(), byBandMode: new Set(), dxcc: new Set(), itu: new Set(), cq: new Set() };
   for (const q of qsos ?? []) {
     const call = norm(q.call);
     if (!call) continue;
     w.calls.add(call);
+    w.byBandMode.add(workedKey(call, q.band, q.mode));
     const info = lookup(call);
     if (info) {
       w.dxcc.add(info.dxcc);
@@ -107,7 +118,10 @@ export function cardModel(row, ctx) {
   const follow = (ctx.follow?.has(norm(p.from)) ?? false) || p.ota;
   const worked = ctx.worked ?? EMPTY_WORKED;
   const other = norm(otherCallsign(p, myCall));
-  const strike = other !== '' && worked.calls.has(other);
+  // 這則解碼實際的波段（CAT 連線時可能跟目前設定的波段不同，見 row.dialHz 的註解，main.mjs D14）
+  const dial = row.dialHz ?? ctx.dialHz;
+  const band = Number.isFinite(dial) ? bandOf(dial) : null;
+  const strike = other !== '' && worked.byBandMode.has(workedKey(other, band, row.mode));
   const lookup = ctx.lookup ?? (() => null);
   const fromInfo = p.free || !p.from ? null : lookup(p.from);
   const toInfo = p.free || p.cq || !p.to || p.to.includes('...') ? null : lookup(p.to);

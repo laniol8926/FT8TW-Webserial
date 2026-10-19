@@ -46,6 +46,7 @@ import { initFloat } from './tx/float.mjs';
 import { renderQsoList } from './qso/logview.mjs';
 import { initQsoUi } from './qso/ui.mjs';
 import { openQsoLog } from './qso/log.mjs';
+import { importAdif } from './qso/adif-import.mjs';
 import { initRowCall } from './tx/rowcall.mjs';
 import { menuItems } from './qso/menu.mjs';
 import { initContextMenu } from './qso/contextmenu.mjs';
@@ -1227,15 +1228,49 @@ $('strip-tx').addEventListener('click', () => {
 });
 // 通聯記錄分頁（簡易清單）與手機底部分頁
 let qsoFilter = null; // 右鍵「查日誌」：只顯示這個呼號
+// 這個清單是簡易版（完整記錄頁規劃在 T5，見 js/qso/logview.mjs 開頭註解，尚未做），一次把
+// 全部記錄變成 DOM 節點會在筆數大時（例如匯入整個歷史 log）讓分頁沒有回應，所以只顯示最近
+// QSO_LIST_CAP 筆；完整資料仍然都在 IndexedDB 裡，匯入／筆數統計都是看全部，只有畫面顯示受限。
+const QSO_LIST_CAP = 20;
 async function refreshQsoList() {
   const all = await (await qsoLogReady).list();
   const list = qsoFilter ? all.filter((q) => q.call === qsoFilter) : all;
   $('qso-filter-clear').hidden = !qsoFilter;
-  renderQsoList($('qso-list'), list);
-  $('qso-count').textContent = qsoFilter ? t('page.log.count_filtered', { call: qsoFilter, n: list.length }) : list.length ? t('page.log.count', { n: list.length }) : '';
+  renderQsoList($('qso-list'), list.slice(0, QSO_LIST_CAP));
+  $('qso-count').textContent = !list.length ? ''
+    : list.length > QSO_LIST_CAP ? t('page.log.count_capped', { n: QSO_LIST_CAP, total: list.length })
+    : qsoFilter ? t('page.log.count_filtered', { call: qsoFilter, n: list.length })
+    : t('page.log.count', { n: list.length });
   $('qso-empty').hidden = list.length > 0;
 }
 refreshQsoList().catch(() => {});
+// ADIF 匯入（通聯記錄分頁）：讀 Android FT8TW／QRZ 等 logger 匯出的 .adi，批次寫進同一個 IndexedDB
+$('qso-import').addEventListener('click', () => $('qso-import-file').click());
+$('qso-import-file').addEventListener('change', async () => {
+  const [file] = $('qso-import-file').files;
+  $('qso-import-file').value = ''; // 清掉選取，讓使用者可以重選同一個檔案
+  if (!file) return;
+  $('qso-import-msg').textContent = t('page.log.importing');
+  try {
+    const text = await file.text();
+    const log = await qsoLogReady;
+    // 每 20 筆才更新一次畫面：單筆更新 DOM 對幾千筆的匯入沒必要，但要頻繁到使用者看得出「還在動」
+    const { total, added, duplicate, invalid } = await importAdif(text, log, (done, writing) => {
+      if (done % 20 === 0 || done === writing) $('qso-import-msg').textContent = t('page.log.importing_progress', { done, total: writing });
+    });
+    refreshQsoList();
+    cards?.refreshWorked();
+    $('qso-import-msg').textContent = t('page.log.import_done', { total, added, duplicate, invalid });
+  } catch (err) {
+    $('qso-import-msg').textContent = t('page.log.import_failed', { error: err.message });
+  }
+});
+// 隱藏已通聯過的站台（使用者 2026-10-19，Control 分頁）：解碼清單直接拿掉那些列，不是只加刪除線
+$('cfg-hide-worked-decodes').checked = Boolean(configUi.get().hideWorkedDecodes);
+$('cfg-hide-worked-decodes').addEventListener('change', () => {
+  configUi.update({ hideWorkedDecodes: $('cfg-hide-worked-decodes').checked });
+  filterDecodesByMode();
+});
 // JS8 模式（add-web-js8-chat D1）：右欄／手機整頁換成 JS8 通訊畫面，分頁各記各的，離開 JS8 還原
 const initialMode = settingsUi.get().mode;
 // 狀態列的模式下拉：切換＝點設置頁的模式選項（同一條路徑：存設定、換切窗、版面、停發射）

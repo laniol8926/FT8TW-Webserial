@@ -89,6 +89,7 @@ export default {
     'page.label.report': 'Reporting',
     'page.state.idle': 'Not started',
     'page.report.idle': 'No time correction yet',
+    'page.control.hideWorked': 'Hide previously worked stations',
 
     // 控制：通聯、發射
     'page.qso.title': 'QSO',
@@ -110,6 +111,12 @@ export default {
     'page.log.empty': 'No QSOs logged yet. A QSO appears here once it is complete (after sending RR73 or 73).',
     'page.log.count': '({n})',
     'page.log.count_filtered': '({call}: {n})',
+    'page.log.count_capped': '(showing most recent {n} of {total})',
+    'page.log.import': 'Import ADIF',
+    'page.log.importing': 'Importing…',
+    'page.log.importing_progress': 'Importing… {done}/{total}',
+    'page.log.import_done': 'Imported {added} of {total} ({duplicate} already logged, {invalid} skipped)',
+    'page.log.import_failed': 'Import failed: {error}',
 
     // 底部通聯控制列
     'page.qsobar.label': 'QSO controls',
@@ -315,6 +322,7 @@ export default {
     'page.label.report': '回報',
     'page.state.idle': '尚未開始',
     'page.report.idle': '尚未取得時間校正',
+    'page.control.hideWorked': '隱藏已通聯過的站台',
 
     'page.qso.title': '通聯',
     'page.qso.target': '目標：',
@@ -334,6 +342,12 @@ export default {
     'page.log.empty': '還沒有通聯記錄。完成一次通聯（送出 RR73 或 73）後會出現在這裡。',
     'page.log.count': '（{n} 筆）',
     'page.log.count_filtered': '（{call}：{n} 筆）',
+    'page.log.count_capped': '（顯示最近 {n} 筆，共 {total} 筆）',
+    'page.log.import': '匯入 ADIF',
+    'page.log.importing': '匯入中…',
+    'page.log.importing_progress': '匯入中…{done}／{total}',
+    'page.log.import_done': '已匯入 {added}／{total} 筆（{duplicate} 筆已存在、{invalid} 筆略過）',
+    'page.log.import_failed': '匯入失敗：{error}',
 
     'page.qsobar.label': '通聯控制',
     'page.qsobar.auto_title': '自動回應 CQ',

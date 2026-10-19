@@ -1,0 +1,445 @@
+diff -ruN '--exclude=*.orig' ft8tw-p13d-base/index.html ft8tw-p13d-work/index.html
+--- a/index.html	2026-10-19 17:42:22.414180896 +0000
++++ b/index.html	2026-10-19 17:42:43.142060534 +0000
+@@ -1284,6 +1284,7 @@
+       <div><span class="label" data-i18n="page.label.report">回報</span> <span id="report" data-i18n="page.report.idle">尚未取得時間校正</span></div>
+       <p id="dev-report-note" class="warn" hidden></p>
+       <ul id="warnings" class="warnings"></ul>
++      <label class="cfg-line switch"><span class="cfg-label" data-i18n="page.control.hideWorked">隱藏已通聯過的站台</span><input id="cfg-hide-worked-decodes" type="checkbox" role="switch"></label>
+     </section>
+     <!-- JTTY 模式才顯示（使用者 2026-10-09：控制分頁加一個刪除全部 JTTY 訊息） -->
+     <section id="jtty-control" class="panel jtty-only" aria-labelledby="jtty-control-title">
+@@ -1335,7 +1336,10 @@
+     </div>
+     <section id="log-panel" class="panel log" aria-labelledby="log-title">
+       <h2 id="log-title"><span data-i18n="page.tab.log">通聯記錄</span> <span id="qso-count" class="count"></span>
++        <button id="qso-import" type="button" class="secondary" data-i18n="page.log.import">匯入 ADIF</button>
++        <input id="qso-import-file" type="file" accept=".adi,.adif,text/plain" hidden>
+         <button id="qso-filter-clear" type="button" class="secondary" hidden data-i18n="page.log.show_all">顯示全部</button></h2>
++      <p id="qso-import-msg" class="hint" aria-live="polite"></p>
+       <ul id="qso-list" class="qso-list"></ul>
+       <p id="qso-empty" class="hint" data-i18n="page.log.empty">還沒有通聯記錄。完成一次通聯（送出 RR73 或 73）後會出現在這裡。</p>
+     </section>
+diff -ruN '--exclude=*.orig' ft8tw-p13d-base/js/cards/rules.mjs ft8tw-p13d-work/js/cards/rules.mjs
+--- a/js/cards/rules.mjs	2026-10-19 17:42:22.382181082 +0000
++++ b/js/cards/rules.mjs	2026-10-19 17:47:36.780349066 +0000
+@@ -5,11 +5,16 @@
+ // 網頁沒有 Ft8Message 的 i3／n3，以 qso/messages.mjs 的 parseFt8Text 判斷（認不出＝自由文字／遙測）。
+ // 「已通聯」直接查 QSO 記錄的呼號集合（FT8TW checkQSLCallsign），不做 FT8TW 的加入當下快照（workedWhenAdded）：
+ // 網頁每次重畫都即時查，目前呼叫的對象另外豁免，效果與快照＋規則 2 相同。
++// 刪除線（cardModel 的 strike）另外分波段／模式（使用者 2026-10-19）：同一個呼號在沒通聯過的
++// 頻段或模式上還是算新的——鍵的格式跟 reporter.mjs 回報去重的「呼號｜波段｜模式」一樣（D14）。
++// 注意這跟 hiddenAsWorked（WorkedStationFilter，下面）是兩回事，那個仍然整支呼號查，不分波段
++// 模式——維持 Android 版 checkQSLCallsign 原本的行為，只有刪除線這裡改。
+ import { callsignFrom, callsignTo, isCq, isMyCallsign, parseFt8Text } from '../qso/messages.mjs';
+ import { checkMaidenhead, gridDistanceKm } from '../country/geo.mjs';
+ import { SLOT_MS } from '../slot.mjs';
+ import { countryName } from '../country/db.mjs';
+ import { formatUtc, formatUtcTenths } from '../format.mjs';
++import { bandOf } from '../bands.mjs';
+ import { t } from '../i18n/index.mjs';
+ 
+ const OTA = /^CQ\s+(SOTA|POTA|OTA)\b/;
+@@ -70,15 +75,21 @@
+   };
+ }
+ 
+-export const EMPTY_WORKED = Object.freeze({ calls: new Set(), dxcc: new Set(), itu: new Set(), cq: new Set() });
++export const EMPTY_WORKED = Object.freeze({ calls: new Set(), byBandMode: new Set(), dxcc: new Set(), itu: new Set(), cq: new Set() });
++
++// 「呼號｜波段｜模式」鍵，band／mode 缺的話用 '?'（分開計，不會跟真的波段/模式混在一起）
++export const workedKey = (call, band, mode) => `${call}|${band ?? '?'}|${mode ?? '?'}`;
+ 
+ // QSO 記錄 → 已通聯的呼號、DXCC、ITU 區、CQ 區（GeneralVariables 的 QSL_Callsign_list、dxccMap、ituMap、cqMap）
++// calls：整支呼號（給 hiddenAsWorked／Stations 分頁用，不分波段模式）
++// byBandMode：呼號＋波段＋模式（給 cardModel 的刪除線用，同一呼號換頻段/模式要算新的）
+ export function workedSets(qsos, lookup = () => null) {
+-  const w = { calls: new Set(), dxcc: new Set(), itu: new Set(), cq: new Set() };
++  const w = { calls: new Set(), byBandMode: new Set(), dxcc: new Set(), itu: new Set(), cq: new Set() };
+   for (const q of qsos ?? []) {
+     const call = norm(q.call);
+     if (!call) continue;
+     w.calls.add(call);
++    w.byBandMode.add(workedKey(call, q.band, q.mode));
+     const info = lookup(call);
+     if (info) {
+       w.dxcc.add(info.dxcc);
+@@ -107,7 +118,10 @@
+   const follow = (ctx.follow?.has(norm(p.from)) ?? false) || p.ota;
+   const worked = ctx.worked ?? EMPTY_WORKED;
+   const other = norm(otherCallsign(p, myCall));
+-  const strike = other !== '' && worked.calls.has(other);
++  // 這則解碼實際的波段（CAT 連線時可能跟目前設定的波段不同，見 row.dialHz 的註解，main.mjs D14）
++  const dial = row.dialHz ?? ctx.dialHz;
++  const band = Number.isFinite(dial) ? bandOf(dial) : null;
++  const strike = other !== '' && worked.byBandMode.has(workedKey(other, band, row.mode));
+   const lookup = ctx.lookup ?? (() => null);
+   const fromInfo = p.free || !p.from ? null : lookup(p.from);
+   const toInfo = p.free || p.cq || !p.to || p.to.includes('...') ? null : lookup(p.to);
+diff -ruN '--exclude=*.orig' ft8tw-p13d-base/js/cards/ui.mjs ft8tw-p13d-work/js/cards/ui.mjs
+--- a/js/cards/ui.mjs	2026-10-19 17:42:22.418180873 +0000
++++ b/js/cards/ui.mjs	2026-10-19 17:43:19.509849355 +0000
+@@ -364,12 +364,16 @@
+       redraw();
+     },
+     recent: () => recent,
+-    // 解碼清單的篩選：回傳 (row) => 是否符合（JS8、JTTY 一律符合）；一次取一個，整批列共用同一份 ctx
++    // 解碼清單的篩選：回傳 (row) => 是否符合（JS8、JTTY 一律符合）；一次取一個，整批列共用同一份 ctx。
++    // hideWorkedDecodes（使用者 2026-10-19，Control 分頁）：跟 showWorkedStations 是兩回事——
++    // 那個只管 Stations 分頁要不要列出已通聯站台；這個是解碼清單要不要把已通聯過的列直接拿掉
++    // （沿用 cardModel 算 strike 用的同一條 worked 判斷，確保跟畫面上的刪除線完全一致）。
+     decodeFilter() {
+       if (!filtersOn()) return () => true;
+       const c = ctx();
+       const opts = { ...decodeState, nowUtc: utcNow() };
+-      return (row) => matchesListFilter(row, opts, c);
++      const hideWorked = Boolean(getConfig().hideWorkedDecodes);
++      return (row) => matchesListFilter(row, opts, c) && (!hideWorked || !cardModel(row, c).strike);
+     },
+     // 解碼清單看得到幾列、目前模式共幾列：空清單雷達（main.mjs 每次更新計數時呼叫）
+     decodeEmpty(shown, total) {
+diff -ruN '--exclude=*.orig' ft8tw-p13d-base/js/config/model.mjs ft8tw-p13d-work/js/config/model.mjs
+--- a/js/config/model.mjs	2026-10-19 17:40:22.570876798 +0000
++++ b/js/config/model.mjs	2026-10-19 17:42:35.670103922 +0000
+@@ -100,6 +100,10 @@
+   autoFollowCQOrder: oneOf(0, [0, 1, 2, 3, 4, 5, 6]), // 回應 CQ 方案，標籤見 qso/autofollow.mjs SCHEME_LABELS
+   qsoFilterOpt: oneOf(4, QSO_FILTER_OPTIONS.map(([v]) => v)),
+   showWorkedStations: bool(true),
++  // Control 分頁「隱藏已通聯站台」（使用者 2026-10-19）：跟 showWorkedStations 分開，各管各的——
++  // showWorkedStations 只影響 Stations 分頁的站台清單與分區新舊標記，不碰解碼清單；這個只管
++  // 解碼清單要不要把已通聯過的列直接拿掉（不是加刪除線，是真的不顯示）。
++  hideWorkedDecodes: bool(false),
+   followCallsigns: list(),
+   excludedCallsigns: list(), // 排除的呼號前綴
+   launchSupervisionMin: oneOf(15, SUPERVISION_OPTIONS),
+diff -ruN '--exclude=*.orig' ft8tw-p13d-base/js/i18n/dict/page.mjs ft8tw-p13d-work/js/i18n/dict/page.mjs
+--- a/js/i18n/dict/page.mjs	2026-10-19 17:39:59.247012234 +0000
++++ b/js/i18n/dict/page.mjs	2026-10-19 17:43:04.321937548 +0000
+@@ -92,6 +92,7 @@
+     'page.label.report': 'Reporting',
+     'page.state.idle': 'Not started',
+     'page.report.idle': 'No time correction yet',
++    'page.control.hideWorked': 'Hide previously worked stations',
+ 
+     // 控制：通聯、發射
+     'page.qso.title': 'QSO',
+@@ -113,6 +114,12 @@
+     'page.log.empty': 'No QSOs logged yet. A QSO appears here once it is complete (after sending RR73 or 73).',
+     'page.log.count': '({n})',
+     'page.log.count_filtered': '({call}: {n})',
++    'page.log.count_capped': '(showing most recent {n} of {total})',
++    'page.log.import': 'Import ADIF',
++    'page.log.importing': 'Importing…',
++    'page.log.importing_progress': 'Importing… {done}/{total}',
++    'page.log.import_done': 'Imported {added} of {total} ({duplicate} already logged, {invalid} skipped)',
++    'page.log.import_failed': 'Import failed: {error}',
+ 
+     // 底部通聯控制列
+     'page.qsobar.label': 'QSO controls',
+@@ -321,6 +328,7 @@
+     'page.label.report': '回報',
+     'page.state.idle': '尚未開始',
+     'page.report.idle': '尚未取得時間校正',
++    'page.control.hideWorked': '隱藏已通聯過的站台',
+ 
+     'page.qso.title': '通聯',
+     'page.qso.target': '目標：',
+@@ -340,6 +348,12 @@
+     'page.log.empty': '還沒有通聯記錄。完成一次通聯（送出 RR73 或 73）後會出現在這裡。',
+     'page.log.count': '（{n} 筆）',
+     'page.log.count_filtered': '（{call}：{n} 筆）',
++    'page.log.count_capped': '（顯示最近 {n} 筆，共 {total} 筆）',
++    'page.log.import': '匯入 ADIF',
++    'page.log.importing': '匯入中…',
++    'page.log.importing_progress': '匯入中…{done}／{total}',
++    'page.log.import_done': '已匯入 {added}／{total} 筆（{duplicate} 筆已存在、{invalid} 筆略過）',
++    'page.log.import_failed': '匯入失敗：{error}',
+ 
+     'page.qsobar.label': '通聯控制',
+     'page.qsobar.auto_title': '自動回應 CQ',
+diff -ruN '--exclude=*.orig' ft8tw-p13d-base/js/main.mjs ft8tw-p13d-work/js/main.mjs
+--- a/js/main.mjs	2026-10-19 17:42:22.350181268 +0000
++++ b/js/main.mjs	2026-10-19 17:43:35.317757562 +0000
+@@ -50,6 +50,7 @@
+ import { renderQsoList } from './qso/logview.mjs';
+ import { initQsoUi } from './qso/ui.mjs';
+ import { openQsoLog } from './qso/log.mjs';
++import { importAdif } from './qso/adif-import.mjs';
+ import { initRowCall } from './tx/rowcall.mjs';
+ import { menuItems } from './qso/menu.mjs';
+ import { initContextMenu } from './qso/contextmenu.mjs';
+@@ -1251,15 +1252,49 @@
+ });
+ // 通聯記錄分頁（簡易清單）與手機底部分頁
+ let qsoFilter = null; // 右鍵「查日誌」：只顯示這個呼號
++// 這個清單是簡易版（完整記錄頁規劃在 T5，見 js/qso/logview.mjs 開頭註解，尚未做），一次把
++// 全部記錄變成 DOM 節點會在筆數大時（例如匯入整個歷史 log）讓分頁沒有回應，所以只顯示最近
++// QSO_LIST_CAP 筆；完整資料仍然都在 IndexedDB 裡，匯入／筆數統計都是看全部，只有畫面顯示受限。
++const QSO_LIST_CAP = 20;
+ async function refreshQsoList() {
+   const all = await (await qsoLogReady).list();
+   const list = qsoFilter ? all.filter((q) => q.call === qsoFilter) : all;
+   $('qso-filter-clear').hidden = !qsoFilter;
+-  renderQsoList($('qso-list'), list);
+-  $('qso-count').textContent = qsoFilter ? t('page.log.count_filtered', { call: qsoFilter, n: list.length }) : list.length ? t('page.log.count', { n: list.length }) : '';
++  renderQsoList($('qso-list'), list.slice(0, QSO_LIST_CAP));
++  $('qso-count').textContent = !list.length ? ''
++    : list.length > QSO_LIST_CAP ? t('page.log.count_capped', { n: QSO_LIST_CAP, total: list.length })
++    : qsoFilter ? t('page.log.count_filtered', { call: qsoFilter, n: list.length })
++    : t('page.log.count', { n: list.length });
+   $('qso-empty').hidden = list.length > 0;
+ }
+ refreshQsoList().catch(() => {});
++// ADIF 匯入（通聯記錄分頁）：讀 Android FT8TW／QRZ 等 logger 匯出的 .adi，批次寫進同一個 IndexedDB
++$('qso-import').addEventListener('click', () => $('qso-import-file').click());
++$('qso-import-file').addEventListener('change', async () => {
++  const [file] = $('qso-import-file').files;
++  $('qso-import-file').value = ''; // 清掉選取，讓使用者可以重選同一個檔案
++  if (!file) return;
++  $('qso-import-msg').textContent = t('page.log.importing');
++  try {
++    const text = await file.text();
++    const log = await qsoLogReady;
++    // 每 20 筆才更新一次畫面：單筆更新 DOM 對幾千筆的匯入沒必要，但要頻繁到使用者看得出「還在動」
++    const { total, added, duplicate, invalid } = await importAdif(text, log, (done, writing) => {
++      if (done % 20 === 0 || done === writing) $('qso-import-msg').textContent = t('page.log.importing_progress', { done, total: writing });
++    });
++    refreshQsoList();
++    cards?.refreshWorked();
++    $('qso-import-msg').textContent = t('page.log.import_done', { total, added, duplicate, invalid });
++  } catch (err) {
++    $('qso-import-msg').textContent = t('page.log.import_failed', { error: err.message });
++  }
++});
++// 隱藏已通聯過的站台（使用者 2026-10-19，Control 分頁）：解碼清單直接拿掉那些列，不是只加刪除線
++$('cfg-hide-worked-decodes').checked = Boolean(configUi.get().hideWorkedDecodes);
++$('cfg-hide-worked-decodes').addEventListener('change', () => {
++  configUi.update({ hideWorkedDecodes: $('cfg-hide-worked-decodes').checked });
++  filterDecodesByMode();
++});
+ // JS8 模式（add-web-js8-chat D1）：右欄／手機整頁換成 JS8 通訊畫面，分頁各記各的，離開 JS8 還原
+ const initialMode = settingsUi.get().mode;
+ // 狀態列的模式下拉：切換＝點設置頁的模式選項（同一條路徑：存設定、換切窗、版面、停發射）
+diff -ruN '--exclude=*.orig' ft8tw-p13d-base/js/qso/adif-import.mjs ft8tw-p13d-work/js/qso/adif-import.mjs
+--- a/js/qso/adif-import.mjs	1970-01-01 00:00:00.000000000 +0000
++++ b/js/qso/adif-import.mjs	2026-10-19 17:48:01.960202055 +0000
+@@ -0,0 +1,119 @@
++// ADIF 匯入（通聯記錄分頁）：讀 Dan 的 Android FT8TW（或 QRZ／LoTW／其他 logger）匯出的
++// .adi 檔，轉成本機 QSO 記錄（js/qso/log.mjs 的 schema）後交給 log.importBatch() 批次寫入。
++// 兩邊是各自獨立的資料庫，沒有共用格式，但都讀寫 ADIF（業餘無線電通用的日誌交換格式）——
++// Android 版的匯出在手機上的 :7050 web console（QSOLogs 頁的「Export ADI」鍵）。
++// 必要欄位只有 CALL／QSO_DATE+TIME_ON／MODE（跟 log.mjs 的 valid() 要求一致）；缺的那幾筆
++// 算 invalid，不會讓整個檔案失敗。10 分鐘同呼號防重沿用 log.mjs 的既有規則，重複匯入同一個
++// 檔案不會造成重複記錄。批次寫入（而不是逐筆呼叫 add()）是因為逐筆都整表重掃一次重複檢查，
++// 筆數一多（幾百筆以上）會慢到看起來像卡住——這裡只整表讀一次、建成記憶體索引。解析／轉換／
++// 寫入三個階段都在 log.mjs／這裡用 yieldToMain() 分段，避免上萬筆時整個分頁沒有回應
++// （使用者實測遇到：匯入 54,503 筆後分頁真的沒回應——那次是因為沒有分段，一次跑完）。
++
++import { bandOf } from '../bands.mjs';
++
++const SUBMODE_ALIAS = { FT4: 'FT4', JS8: 'JS8' };
++const CHUNK = 2000;
++// 真的把主執行緒讓出去（setTimeout），不是只讓微任務跑完——大檔案（上萬筆）光是解析／轉換
++// 這兩步本身都是純同步迴圈，不中斷一樣會讓分頁長時間沒有回應，跟寫入階段是同一類問題。
++const yieldToMain = () => new Promise((resolve) => setTimeout(resolve, 0));
++
++// 單筆記錄字串（<eor> 之間，不含 <eor> 本身）解析成 { TAG: value } 的表。
++// ADIF 標籤格式：<name:length[:type]>value，length 以位元組數計；我們用字元數切（跟 Android
++// 版同一個簡化作法），只有欄位值含多位元組 UTF-8 字元時才會切錯，而 QSO 記錄的欄位
++// （呼號／網格／頻段／模式／RST）本來就都是 ASCII，實務上不受影響。
++function parseAdifFields(record) {
++  const fields = {};
++  const re = /<([A-Za-z0-9_]+)(?::(\d+))?(?::[A-Za-z]+)?>/g;
++  let match;
++  while ((match = re.exec(record))) {
++    const name = match[1].toUpperCase();
++    if (name === 'EOR' || name === 'EOH') continue;
++    const len = match[2] !== undefined ? Number(match[2]) : null;
++    const start = match.index + match[0].length;
++    fields[name] = len === null ? '' : record.slice(start, start + len);
++  }
++  return fields;
++}
++
++// 解析整份 ADIF 檔案，回傳每筆記錄的欄位表陣列（略過檔頭，<eoh> 之前的內容）。
++export async function parseAdifRecords(text) {
++  const eohIdx = text.search(/<eoh>/i);
++  const body = eohIdx >= 0 ? text.slice(eohIdx + 5) : text;
++  const chunks = body.split(/<eor>/i).filter((chunk) => chunk.includes('<'));
++  const records = [];
++  for (let i = 0; i < chunks.length; i++) {
++    records.push(parseAdifFields(chunks[i]));
++    if (i % CHUNK === 0) await yieldToMain();
++  }
++  return records;
++}
++
++function parseAdifDateTime(dateStr, timeStr) {
++  if (!dateStr || dateStr.length < 8) return null;
++  const y = Number(dateStr.slice(0, 4));
++  const mo = Number(dateStr.slice(4, 6));
++  const d = Number(dateStr.slice(6, 8));
++  const t = (timeStr || '').padEnd(6, '0');
++  const h = Number(t.slice(0, 2));
++  const mi = Number(t.slice(2, 4));
++  const s = Number(t.slice(4, 6));
++  const ms = Date.UTC(y, mo - 1, d, h, mi, s);
++  return Number.isFinite(ms) ? ms : null;
++}
++
++// MODE/SUBMODE -> log.mjs 的 mode 字串（FT8TW 自己匯出的 ADIF 用 MFSK+SUBMODE 表 FT4/JS8，
++// FT2 沒有正式 ADIF 模式，寫在 COMMENT 裡，見 js/adif.mjs 的 toAdif()，這裡做對應的還原）。
++function modeFromFields(f) {
++  const mode = (f.MODE || '').toUpperCase();
++  const submode = (f.SUBMODE || '').toUpperCase();
++  if (submode) return SUBMODE_ALIAS[submode] ?? submode;
++  if (mode === 'MFSK' && /\[FT2\]/i.test(f.COMMENT || '')) return 'FT2';
++  return mode;
++}
++
++// 一筆 ADIF 欄位表 -> js/qso/log.mjs 的記錄格式；缺必要欄位（呼號/日期時間/模式）回傳 null。
++export function adifRecordToQso(f) {
++  const call = (f.CALL || '').trim().toUpperCase();
++  const mode = modeFromFields(f);
++  const startUtc = parseAdifDateTime(f.QSO_DATE, f.TIME_ON);
++  if (!call || !mode || startUtc === null) return null;
++  const endUtc = parseAdifDateTime(f.QSO_DATE_OFF || f.QSO_DATE, f.TIME_OFF || f.TIME_ON) ?? startUtc;
++  const freqHz = f.FREQ ? Math.round(Number(f.FREQ) * 1e6) : NaN;
++  // BAND 大小寫不保證跟 bandOf() 的 '20m' 這種小寫一致（有些 logger 寫 '20M'）——已通聯判斷
++  // 現在是用「呼號｜波段｜模式」比對（cards/rules.mjs workedKey），band 對不起來會變成永遠比對
++  // 不到，所以這裡正規化成小寫；BAND 缺的話用 FREQ 算，同 qso/ui.mjs 完成通聯時的算法一致。
++  const band = f.BAND ? f.BAND.toLowerCase() : (Number.isFinite(freqHz) ? bandOf(freqHz) ?? undefined : undefined);
++  return {
++    call,
++    grid: f.GRIDSQUARE || undefined,
++    myCall: f.STATION_CALLSIGN || undefined,
++    myGrid: f.MY_GRIDSQUARE || undefined,
++    startUtc,
++    endUtc,
++    mode,
++    band,
++    freqHz: Number.isFinite(freqHz) ? freqHz : undefined,
++    rstSent: f.RST_SENT || undefined,
++    rstRcvd: f.RST_RCVD || undefined,
++    country: f.COUNTRY || undefined,
++  };
++}
++
++// 匯入整份檔案：轉換每筆記錄後交給 log.importBatch() 批次寫入（log 由呼叫端傳入，通常是
++// await qsoLogReady；這裡不直接碰 IndexedDB）。onProgress(done, total) 回報目前寫入進度
++// （total 是「要寫入的筆數」，ADIF 轉換階段解不出必要欄位的記錄不計在內，因為那些從不會進
++// 寫入階段）。回傳統計：total（檔案總筆數）／added／duplicate（10 分鐘同呼號防重擋下）／
++// invalid（ADIF 轉換失敗 + 寫入階段判定無效，兩者相加）。
++export async function importAdif(text, log, onProgress) {
++  const records = await parseAdifRecords(text);
++  const mapped = [];
++  let invalid = 0;
++  for (let i = 0; i < records.length; i++) {
++    const q = adifRecordToQso(records[i]);
++    if (q) mapped.push(q);
++    else invalid++;
++    if (i % CHUNK === 0) await yieldToMain();
++  }
++  const result = await log.importBatch(mapped, onProgress);
++  return { total: records.length, added: result.added, duplicate: result.duplicate, invalid: invalid + result.invalid };
++}
+diff -ruN '--exclude=*.orig' ft8tw-p13d-base/js/qso/log.mjs ft8tw-p13d-work/js/qso/log.mjs
+--- a/js/qso/log.mjs	2026-10-19 17:41:31.674475529 +0000
++++ b/js/qso/log.mjs	2026-10-19 17:42:22.534180199 +0000
+@@ -9,6 +9,11 @@
+ const STORE = 'qso';
+ export { QSO_COOLDOWN_MS }; // 冷卻時間只在 retry.mjs 定義一次（通聯流程與記錄共用）
+ 
++// 批次匯入用：真的把主執行緒讓出去（setTimeout，不是 await Promise.resolve() 那種只讓微任務
++// 跑完），讓瀏覽器有機會畫面重繪／處理輸入，避免大量匯入（上萬筆）時整個分頁被判定沒有回應。
++const yieldToMain = () => new Promise((resolve) => setTimeout(resolve, 0));
++const BULK_CHUNK = 500;
++
+ class MemoryBackend {
+   constructor() {
+     this.rows = [];
+@@ -17,6 +22,14 @@
+   async add(r) {
+     this.rows.push({ ...r, id: this.nextId++ });
+   }
++  async addMany(records, onProgress) {
++    let done = 0;
++    for (const r of records) {
++      this.rows.push({ ...r, id: this.nextId++ });
++      onProgress?.(++done, records.length);
++      if (done % BULK_CHUNK === 0) await yieldToMain();
++    }
++  }
+   async all() {
+     return this.rows.map((r) => ({ ...r }));
+   }
+@@ -41,6 +54,28 @@
+   add(r) {
+     return this.run('readwrite', (s) => s.add(r));
+   }
++  // 分批寫（ADIF 匯入用，大量歷史記錄可能上萬筆）：逐筆各開一個 transaction 太慢，但一個
++  // transaction 塞完全部又會讓送出 54,000 個 add() 的這個同步迴圈本身長到讓分頁沒有回應
++  // （使用者實測遇到：匯入 54,503 筆後分頁真的沒回應）。折衷：每 BULK_CHUNK 筆一個
++  // transaction，塊與塊之間用 yieldToMain() 真的把主執行緒讓出去一次。
++  async addMany(records, onProgress) {
++    let done = 0;
++    for (let i = 0; i < records.length; i += BULK_CHUNK) {
++      const chunk = records.slice(i, i + BULK_CHUNK);
++      await new Promise((resolve, reject) => {
++        const tx = this.db.transaction(STORE, 'readwrite');
++        const store = tx.objectStore(STORE);
++        for (const r of chunk) {
++          const req = store.add(r);
++          req.onsuccess = () => onProgress?.(++done, records.length);
++        }
++        tx.oncomplete = () => resolve();
++        tx.onerror = () => reject(tx.error);
++        tx.onabort = () => reject(tx.error);
++      });
++      await yieldToMain();
++    }
++  }
+   all() {
+     return this.run('readonly', (s) => s.getAll());
+   }
+@@ -94,5 +129,40 @@
+       return (await backend.all()).sort((a, b) => b.endUtc - a.endUtc);
+     },
+     remove: (id) => backend.remove(id),
++    // 批次匯入（ADIF 匯入用）：重複檢查只整表讀一次、建成記憶體索引，寫入共用一個 transaction，
++    // 不是逐筆呼叫 add()（逐筆會整表重掃一次，筆數一多就是 O(n²)，匯入幾百筆就會慢到像卡住）。
++    // 回傳 { total, added, duplicate, invalid }，duplicate 計入既有記錄或本批次內互相重複的筆數。
++    async importBatch(records, onProgress) {
++      const seen = new Map(); // call -> 這個呼號所有記錄的 endUtc 陣列（既有的 + 本批次已經確定要寫入的）
++      const existing = await backend.all();
++      for (let i = 0; i < existing.length; i++) {
++        const r = existing[i];
++        if (!seen.has(r.call)) seen.set(r.call, []);
++        seen.get(r.call).push(r.endUtc);
++        if (i % BULK_CHUNK === 0) await yieldToMain(); // 既有記錄本身可能已經上萬筆（匯入過一次之後再匯入）
++      }
++      const toAdd = [];
++      let duplicate = 0;
++      let invalid = 0;
++      for (let i = 0; i < records.length; i++) {
++        const q = records[i];
++        if (!valid(q)) {
++          invalid++;
++        } else {
++          const call = q.call.trim().toUpperCase();
++          const times = seen.get(call);
++          if (times?.some((t) => Math.abs(q.endUtc - t) < QSO_COOLDOWN_MS)) {
++            duplicate++;
++          } else {
++            if (!seen.has(call)) seen.set(call, []);
++            seen.get(call).push(q.endUtc);
++            toAdd.push({ ...q, call });
++          }
++        }
++        if (i % BULK_CHUNK === 0) await yieldToMain();
++      }
++      if (toAdd.length) await backend.addMany(toAdd, onProgress);
++      return { total: records.length, added: toAdd.length, duplicate, invalid };
++    },
+   };
+ }

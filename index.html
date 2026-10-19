@@ -1244,6 +1244,7 @@
       <div><span class="label" data-i18n="page.label.report">回報</span> <span id="report" data-i18n="page.report.idle">尚未取得時間校正</span></div>
       <p id="dev-report-note" class="warn" hidden></p>
       <ul id="warnings" class="warnings"></ul>
+      <label class="cfg-line switch"><span class="cfg-label" data-i18n="page.control.hideWorked">隱藏已通聯過的站台</span><input id="cfg-hide-worked-decodes" type="checkbox" role="switch"></label>
     </section>
     <!-- JTTY 模式才顯示（使用者 2026-10-09：控制分頁加一個刪除全部 JTTY 訊息） -->
     <section id="jtty-control" class="panel jtty-only" aria-labelledby="jtty-control-title">
@@ -1295,7 +1296,10 @@
     </div>
     <section id="log-panel" class="panel log" aria-labelledby="log-title">
       <h2 id="log-title"><span data-i18n="page.tab.log">通聯記錄</span> <span id="qso-count" class="count"></span>
+        <button id="qso-import" type="button" class="secondary" data-i18n="page.log.import">匯入 ADIF</button>
+        <input id="qso-import-file" type="file" accept=".adi,.adif,text/plain" hidden>
         <button id="qso-filter-clear" type="button" class="secondary" hidden data-i18n="page.log.show_all">顯示全部</button></h2>
+      <p id="qso-import-msg" class="hint" aria-live="polite"></p>
       <ul id="qso-list" class="qso-list"></ul>
       <p id="qso-empty" class="hint" data-i18n="page.log.empty">還沒有通聯記錄。完成一次通聯（送出 RR73 或 73）後會出現在這裡。</p>
     </section>

@@ -364,12 +364,16 @@ export function initCards({ decodes, getRowData, getSettings, getConfig, getTarg
       redraw();
     },
     recent: () => recent,
-    // 解碼清單的篩選：回傳 (row) => 是否符合（JS8、JTTY 一律符合）；一次取一個，整批列共用同一份 ctx
+    // 解碼清單的篩選：回傳 (row) => 是否符合（JS8、JTTY 一律符合）；一次取一個，整批列共用同一份 ctx。
+    // hideWorkedDecodes（使用者 2026-10-19，Control 分頁）：跟 showWorkedStations 是兩回事——
+    // 那個只管 Stations 分頁要不要列出已通聯站台；這個是解碼清單要不要把已通聯過的列直接拿掉
+    // （沿用 cardModel 算 strike 用的同一條 worked 判斷，確保跟畫面上的刪除線完全一致）。
     decodeFilter() {
       if (!filtersOn()) return () => true;
       const c = ctx();
       const opts = { ...decodeState, nowUtc: utcNow() };
-      return (row) => matchesListFilter(row, opts, c);
+      const hideWorked = Boolean(getConfig().hideWorkedDecodes);
+      return (row) => matchesListFilter(row, opts, c) && (!hideWorked || !cardModel(row, c).strike);
     },
     // 解碼清單看得到幾列、目前模式共幾列：空清單雷達（main.mjs 每次更新計數時呼叫）
     decodeEmpty(shown, total) {
